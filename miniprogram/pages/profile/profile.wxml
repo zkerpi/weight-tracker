@@ -2,7 +2,7 @@
   <!-- 用户卡片 -->
   <view class="card profile-card">
     <view class="profile-row">
-      <button class="avatar-btn" bindtap="onChooseAvatar">
+      <button class="avatar-btn" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
         <image class="profile-avatar" src="{{avatarUrl || '/images/profile.png'}}" mode="aspectFill"></image>
       </button>
       <view class="profile-meta">
@@ -60,7 +60,10 @@
     </view>
     <view class="btn-group">
       <button class="btn-outline" bindtap="goGroup" wx:if="{{!groupId}}">加入/创建群组</button>
-      <button class="btn-outline btn-danger-outline" bindtap="leaveGroup" wx:if="{{groupId}}">退出群组</button>
+      <block wx:if="{{groupId}}">
+        <button class="btn-outline" bindtap="goGroup">查看群组</button>
+        <button class="btn-outline btn-danger-outline" bindtap="leaveGroup">退出群组</button>
+      </block>
     </view>
   </view>
 

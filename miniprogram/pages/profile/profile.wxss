@@ -152,6 +152,9 @@
 
 .btn-group {
   margin-top: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
 }
 
 .btn-danger-outline {

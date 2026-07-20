@@ -65,9 +65,22 @@ Page({
       const weightUnit = user.weightUnit || 'kg'
       const unitLabel = util.displayUnit(weightUnit)
 
+      // 转换 cloud:// 头像为临时可访问 URL
+      let displayAvatar = user.avatarUrl || ''
+      if (displayAvatar.startsWith('cloud://')) {
+        try {
+          const { fileList } = await wx.cloud.getTempFileURL({
+            fileList: [displayAvatar]
+          })
+          if (fileList && fileList[0] && fileList[0].tempFileURL) {
+            displayAvatar = fileList[0].tempFileURL
+          }
+        } catch (_) {}
+      }
+
       this.setData({
         nickName: user.nickName || '用户',
-        avatarUrl: user.avatarUrl || '',
+        avatarUrl: displayAvatar,
         avatarTempUrl: '',
         weightUnit,
         unitLabel,
@@ -122,19 +135,10 @@ Page({
     this.setData({ initialWeightText: e.detail.value })
   },
 
- async onChooseAvatar() {
-    try {
-      const media = await wx.chooseMedia({
-        count: 1,
-        mediaType: ['image'],
-        sizeType: ['compressed'],
-        sourceType: ['album', 'camera']
-      })
-      const tempUrl = media.tempFiles[0].tempFilePath
-      this.setData({ avatarUrl: tempUrl })
-    } catch (_) {
-      return  // 用户取消了选择
-    }
+ async onChooseAvatar(e) {
+    const avatarUrl = e.detail.avatarUrl
+    if (!avatarUrl) return
+    this.setData({ avatarUrl })
     // 上传头像到云存储，获取永久链接
     try {
       const tempUrl = this.data.avatarUrl

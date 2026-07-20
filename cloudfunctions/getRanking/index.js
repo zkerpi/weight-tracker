@@ -140,6 +140,23 @@ exports.main = async (event, context) => {
     // 按总变化量降序排列
     rankingData.sort((a, b) => b.totalChange - a.totalChange)
 
+    // 在服务端转换 cloud:// 头像为临时可访问 URL
+    const cloudFileIds = rankingData
+      .filter(item => item.avatarUrl && item.avatarUrl.startsWith('cloud://'))
+      .map(item => item.avatarUrl)
+    if (cloudFileIds.length > 0) {
+      try {
+        const res = await cloud.getTempFileURL({ fileList: cloudFileIds })
+        const urlMap = {}
+        res.fileList.forEach(item => {
+          if (item.tempFileURL) urlMap[item.fileID] = item.tempFileURL
+        })
+        rankingData.forEach(item => {
+          if (urlMap[item.avatarUrl]) item.avatarUrl = urlMap[item.avatarUrl]
+        })
+      } catch (e) {}
+    }
+
     return { code: 0, data: rankingData }
   } catch (err) {
     return { code: -1, msg: err.message }

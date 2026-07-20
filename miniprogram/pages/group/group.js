@@ -6,7 +6,16 @@ Page({
     groupNameValid: false,
     inviteCode: '',
     inviteCodeValid: false,
-    myGroup: null
+    myGroup: null,
+    members: []
+  },
+
+  onLoad(query) {
+    if (query.inviteCode) {
+      this.setData({ inviteCode: query.inviteCode.toUpperCase(), inviteCodeValid: true })
+      // 自动加入群组
+      this.joinGroup()
+    }
   },
 
   onShow() {
@@ -19,14 +28,23 @@ Page({
       const user = app.globalData.userInfo
 
       if (user && user.groupId) {
-        const db = wx.cloud.database()
-        const groupRes = await db.collection('groups').doc(user.groupId).get()
-        this.setData({ myGroup: groupRes.data })
+        const res = await wx.cloud.callFunction({
+          name: 'getGroupMembers',
+          data: { groupId: user.groupId }
+        })
+
+        if (res.result.code === 0) {
+          const { group, members } = res.result.data
+          this.setData({ myGroup: group, members })
+        } else {
+          this.setData({ myGroup: null, members: [] })
+        }
       } else {
-        this.setData({ myGroup: null })
+        this.setData({ myGroup: null, members: [] })
       }
     } catch (err) {
       console.error(err)
+      this.setData({ myGroup: null, members: [] })
     }
   },
 
@@ -66,6 +84,7 @@ Page({
           myGroup: group,
           groupName: ''
         })
+        this.loadMyGroup()
       } else {
         util.showError(res.result.msg || '创建失败')
       }
@@ -103,6 +122,7 @@ Page({
           myGroup: group,
           inviteCode: ''
         })
+        this.loadMyGroup()
       } else {
         util.showError(res.result.msg || '加入失败')
       }
@@ -117,9 +137,9 @@ Page({
   copyInviteCode() {
     if (this.data.myGroup && this.data.myGroup.inviteCode) {
       wx.setClipboardData({
-        data: this.data.myGroup.inviteCode,
-        tip: '邀请码已复制'
+        data: this.data.myGroup.inviteCode
       })
+      wx.showToast({ title: '邀请码已复制', icon: 'none' })
     }
   },
 
@@ -127,8 +147,8 @@ Page({
     const group = this.data.myGroup
     if (group) {
       return {
-        title: `加入「${group.groupName}」一起打卡减重吧！邀请码：${group.inviteCode}`,
-        path: '/pages/group/group'
+        title: `加入「${group.groupName}」一起打卡减重吧！`,
+        path: `/pages/group/group?inviteCode=${group.inviteCode}`
       }
     }
     return {
@@ -152,7 +172,7 @@ Page({
               user.groupId = null
               app.setUserInfo(user)
               util.showSuccess('已退出')
-              this.setData({ myGroup: null })
+              this.setData({ myGroup: null, members: [] })
             } else {
               util.showError(res.result.msg || '操作失败')
             }
