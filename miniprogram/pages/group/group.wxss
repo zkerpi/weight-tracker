@@ -1,0 +1,65 @@
+.form-row {
+  margin-bottom: 20rpx;
+}
+
+.code-input {
+  text-align: center;
+  font-size: 48rpx;
+  font-weight: 700;
+  letter-spacing: 12rpx;
+  text-transform: uppercase;
+}
+
+.my-group-info {
+  margin-bottom: 16rpx;
+}
+
+.group-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+
+.group-detail-row:last-child {
+  border-bottom: none;
+}
+
+.group-detail-label {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+
+.group-detail-value {
+  font-size: 28rpx;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.invite-code-box {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  background: var(--primary-light);
+  padding: 8rpx 20rpx;
+  border-radius: 10rpx;
+}
+
+.invite-code {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: 6rpx;
+}
+
+.copy-hint {
+  font-size: 22rpx;
+  color: var(--primary);
+  opacity: 0.7;
+}
+
+.btn-danger-outline {
+  border-color: var(--danger);
+  color: var(--danger);
+}

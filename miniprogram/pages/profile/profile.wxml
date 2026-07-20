@@ -1,0 +1,61 @@
+<view class="page">
+  <!-- 用户卡片 -->
+  <view class="card profile-card">
+    <view class="profile-row">
+      <image class="profile-avatar" src="{{avatarUrl || '/images/profile.png'}}" mode="aspectFill"></image>
+      <view class="profile-meta">
+        <text class="profile-name">{{nickName}}</text>
+        <text class="profile-days">已打卡 {{totalDays}} 天</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 目标设置 -->
+  <view class="card">
+    <text class="section-title">减重目标</text>
+
+    <view class="setting-row">
+      <text class="setting-label">目标方向</text>
+      <view class="toggle-group">
+        <view class="toggle-btn {{goalType === 'lose' ? 'active' : ''}}" bindtap="setGoalType" data-type="lose">减重</view>
+        <view class="toggle-btn {{goalType === 'gain' ? 'active' : ''}}" bindtap="setGoalType" data-type="gain">增重</view>
+      </view>
+    </view>
+
+    <view class="setting-row">
+      <text class="setting-label">目标体重</text>
+      <view class="input-group">
+        <input class="setting-input" type="digit" placeholder="例如 70" value="{{goalWeightText}}" bindinput="onGoalInput" maxlength="5"></input>
+        <text class="setting-unit">kg</text>
+      </view>
+    </view>
+
+    <view class="setting-row" wx:if="{{currentWeight}}">
+      <text class="setting-label">当前体重</text>
+      <text class="setting-value">{{currentWeight}} kg</text>
+    </view>
+
+    <button class="btn-primary" bindtap="saveGoal">保存目标</button>
+  </view>
+
+  <!-- 群组管理 -->
+  <view class="card">
+    <text class="section-title">群组</text>
+    <view class="setting-row">
+      <text class="setting-label">当前群组</text>
+      <text class="setting-value">{{groupName || '未加入'}}</text>
+    </view>
+    <view class="btn-group">
+      <button class="btn-outline" bindtap="goGroup" wx:if="{{!groupId}}">加入/创建群组</button>
+      <button class="btn-outline btn-danger-outline" bindtap="leaveGroup" wx:if="{{groupId}}">退出群组</button>
+    </view>
+  </view>
+
+  <!-- 关于 -->
+  <view class="card about-card">
+    <view class="setting-row">
+      <text class="setting-label">版本</text>
+      <text class="setting-value">1.0.0</text>
+    </view>
+  </view>
+</view>

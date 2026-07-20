@@ -1,0 +1,113 @@
+.profile-card {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  color: white;
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.profile-avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  border: 4rpx solid rgba(255,255,255,0.4);
+}
+
+.profile-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-name {
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.profile-days {
+  font-size: 26rpx;
+  opacity: 0.8;
+  margin-top: 4rpx;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+
+.setting-row:last-child {
+  border-bottom: none;
+}
+
+.setting-label {
+  font-size: 28rpx;
+  color: var(--text);
+}
+
+.setting-value {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+
+.toggle-group {
+  display: flex;
+  gap: 0;
+  border: 2rpx solid var(--primary);
+  border-radius: 10rpx;
+  overflow: hidden;
+}
+
+.toggle-btn {
+  padding: 10rpx 28rpx;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  background: white;
+}
+
+.toggle-btn.active {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.setting-input {
+  width: 120rpx;
+  text-align: right;
+  font-size: 28rpx;
+  color: var(--text);
+  border-bottom: 2rpx solid var(--border);
+  padding: 4rpx 0;
+}
+
+.setting-unit {
+  font-size: 26rpx;
+  color: var(--text-muted);
+}
+
+.btn-group {
+  margin-top: 16rpx;
+}
+
+.btn-danger-outline {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.about-card {
+  margin-top: 20rpx;
+}
+
+.about-card .setting-row {
+  border: none;
+}

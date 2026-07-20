@@ -1,0 +1,42 @@
+<view class="page">
+  <!-- 创建群组 -->
+  <view class="card">
+    <text class="section-title">创建群组</text>
+    <view class="form-row">
+      <input class="input-field" placeholder="输入群组名称" value="{{groupName}}" bindinput="onGroupNameInput" maxlength="20"></input>
+    </view>
+    <button class="btn-primary" bindtap="createGroup" disabled="{{!groupNameValid}}">创建群组</button>
+  </view>
+
+  <!-- 加入群组 -->
+  <view class="card">
+    <text class="section-title">加入群组</text>
+    <view class="form-row">
+      <input class="input-field code-input" placeholder="输入4位邀请码" value="{{inviteCode}}" bindinput="onInviteCodeInput" maxlength="4"></input>
+    </view>
+    <button class="btn-outline" bindtap="joinGroup" disabled="{{!inviteCodeValid}}">加入群组</button>
+  </view>
+
+  <!-- 我的群组 -->
+  <view class="card" wx:if="{{myGroup}}">
+    <text class="section-title">我的群组</text>
+    <view class="my-group-info">
+      <view class="group-detail-row">
+        <text class="group-detail-label">群组名称</text>
+        <text class="group-detail-value">{{myGroup.groupName}}</text>
+      </view>
+      <view class="group-detail-row">
+        <text class="group-detail-label">邀请码</text>
+        <view class="invite-code-box">
+          <text class="invite-code">{{myGroup.inviteCode}}</text>
+          <text class="copy-hint">点击复制</text>
+        </view>
+      </view>
+      <view class="group-detail-row">
+        <text class="group-detail-label">成员数</text>
+        <text class="group-detail-value">{{myGroup.members ? myGroup.members.length : 0}} 人</text>
+      </view>
+    </view>
+    <button class="btn-outline btn-danger-outline" bindtap="leaveGroup">退出群组</button>
+  </view>
+</view>

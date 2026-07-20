@@ -1,0 +1,112 @@
+.rank-tabs {
+  display: flex;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 6rpx;
+  margin-bottom: 20rpx;
+  box-shadow: var(--shadow);
+}
+
+.rank-tab {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  border-radius: 10rpx;
+  transition: all 0.2s;
+}
+
+.rank-tab.active {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.rank-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rank-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.rank-medal {
+  font-size: 36rpx;
+  width: 48rpx;
+  text-align: center;
+}
+
+.rank-number {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--text-muted);
+  width: 48rpx;
+  text-align: center;
+}
+
+.rank-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.rank-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rank-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-weight {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  margin-top: 2rpx;
+}
+
+.rank-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6rpx;
+  flex-shrink: 0;
+}
+
+.rank-value {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.rank-value.streak-value {
+  color: #f59e0b;
+}
+
+.rank-unit {
+  font-size: 24rpx;
+  color: var(--text-muted);
+}
+
+.checkin-badge {
+  margin-top: 2rpx;
+}

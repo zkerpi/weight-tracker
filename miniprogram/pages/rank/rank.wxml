@@ -1,0 +1,54 @@
+<view class="page">
+  <!-- 排行 Tab 切换 -->
+  <view class="rank-tabs">
+    <view class="rank-tab {{activeTab === 'loss' ? 'active' : ''}}" bindtap="switchTab" data-tab="loss">
+      <text>减重排行</text>
+    </view>
+    <view class="rank-tab {{activeTab === 'percent' ? 'active' : ''}}" bindtap="switchTab" data-tab="percent">
+      <text>百分比</text>
+    </view>
+    <view class="rank-tab {{activeTab === 'streak' ? 'active' : ''}}" bindtap="switchTab" data-tab="streak">
+      <text>连胜🔥</text>
+    </view>
+  </view>
+
+  <!-- 排行榜列表 -->
+  <view wx:if="{{ranking.length > 0}}" class="rank-list">
+    <view class="rank-item card" wx:for="{{ranking}}" wx:key="openId">
+      <view class="rank-left">
+        <text class="rank-medal" wx:if="{{index === 0}}">🥇</text>
+        <text class="rank-medal" wx:elif="{{index === 1}}">🥈</text>
+        <text class="rank-medal" wx:elif="{{index === 2}}">🥉</text>
+        <text class="rank-number" wx:else>{{index + 1}}</text>
+
+        <image class="rank-avatar" src="{{item.avatarUrl || '/images/profile.png'}}" mode="aspectFill"></image>
+        <view class="rank-info">
+          <text class="rank-name">{{item.nickName}}</text>
+          <text class="rank-weight" wx:if="{{item.currentWeight}}">当前 {{item.currentWeight}} kg</text>
+        </view>
+      </view>
+      <view class="rank-right">
+        <text class="rank-value {{activeTab === 'streak' ? 'streak-value' : ''}}">
+          <text wx:if="{{activeTab === 'loss'}}">{{item.totalChange > 0 ? '-' : ''}}{{item.totalChange}}</text>
+          <text wx:elif="{{activeTab === 'percent'}}">{{item.changePercent}}%</text>
+          <text wx:else>{{item.streak}}天</text>
+        </text>
+        <text class="rank-unit" wx:if="{{activeTab === 'loss'}}">kg</text>
+        <view class="checkin-badge" wx:if="{{item.checkedInToday}}">
+          <text class="badge badge-success">已打卡</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <block wx:if="{{loading}}">
+      <text>加载中...</text>
+    </block>
+    <block wx:else>
+      <text>暂无排行数据</text>
+      <text>加入群组或开始打卡后可见</text>
+    </block>
+  </view>
+</view>
