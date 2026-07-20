@@ -28,11 +28,11 @@
 }
 
 .weight-input {
-  font-size: 100rpx;
-  font-weight: 800;
+  font-size: 48rpx;
+  font-weight: 600;
   text-align: center;
-  width: 280rpx;
-  height: 120rpx;
+  width: 200rpx;
+  height: 70rpx;
   color: var(--text);
   border-bottom: 4rpx solid var(--primary);
 }
@@ -94,4 +94,62 @@
 
 .compare-same {
   color: var(--text-muted);
+}
+
+/* 分享卡片 */
+.share-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.share-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 48rpx 40rpx;
+  width: 560rpx;
+  text-align: center;
+}
+
+.share-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--primary);
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.share-weight {
+  font-size: 80rpx;
+  font-weight: 800;
+  color: var(--text);
+  display: block;
+  line-height: 1.2;
+}
+
+.share-date {
+  font-size: 26rpx;
+  color: var(--text-muted);
+  display: block;
+  margin: 12rpx 0 30rpx;
+}
+
+.share-msg {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 40rpx;
+}
+
+.share-skip {
+  display: block;
+  text-align: center;
+  margin-top: 24rpx;
+  font-size: 26rpx;
+  color: var(--text-muted);
+  padding: 10rpx;
 }

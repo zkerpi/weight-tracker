@@ -1,19 +1,35 @@
-<view class="page">
+﻿<view class="page">
   <!-- 用户卡片 -->
   <view class="card profile-card">
     <view class="profile-row">
-      <image class="profile-avatar" src="{{avatarUrl || '/images/profile.png'}}" mode="aspectFill"></image>
+      <button class="avatar-btn" bindtap="onChooseAvatar">
+        <image class="profile-avatar" src="{{avatarUrl || '/images/profile.png'}}" mode="aspectFill"></image>
+      </button>
       <view class="profile-meta">
-        <text class="profile-name">{{nickName}}</text>
+        <input class="profile-name-input" placeholder="点此设置昵称" value="{{nickName}}" bindinput="onNicknameInput" bindblur="onNicknameBlur" />
         <text class="profile-days">已打卡 {{totalDays}} 天</text>
       </view>
     </view>
+    <text class="profile-hint">头像和昵称点击即可修改，自动保存</text>
   </view>
 
   <!-- 目标设置 -->
   <view class="card">
     <text class="section-title">减重目标</text>
-
+    <view class="setting-row">
+      <text class="setting-label">体重单位</text>
+      <view class="toggle-group">
+        <view class="toggle-btn {{weightUnit === 'kg' ? 'active' : ''}}" bindtap="setWeightUnit" data-unit="kg">公斤</view>
+        <view class="toggle-btn {{weightUnit === 'jin' ? 'active' : ''}}" bindtap="setWeightUnit" data-unit="jin">斤</view>
+      </view>
+    </view>
+    <view class="setting-row">
+      <text class="setting-label">初始体重</text>
+      <view class="input-group">
+        <input class="setting-input" type="digit" placeholder="例如 80" value="{{initialWeightText}}" bindinput="onInitialWeightInput" maxlength="5"></input>
+        <text class="setting-unit">{{unitLabel}}</text>
+      </view>
+    </view>
     <view class="setting-row">
       <text class="setting-label">目标方向</text>
       <view class="toggle-group">
@@ -21,20 +37,17 @@
         <view class="toggle-btn {{goalType === 'gain' ? 'active' : ''}}" bindtap="setGoalType" data-type="gain">增重</view>
       </view>
     </view>
-
     <view class="setting-row">
       <text class="setting-label">目标体重</text>
       <view class="input-group">
         <input class="setting-input" type="digit" placeholder="例如 70" value="{{goalWeightText}}" bindinput="onGoalInput" maxlength="5"></input>
-        <text class="setting-unit">kg</text>
+        <text class="setting-unit">{{unitLabel}}</text>
       </view>
     </view>
-
     <view class="setting-row" wx:if="{{currentWeight}}">
       <text class="setting-label">当前体重</text>
-      <text class="setting-value">{{currentWeight}} kg</text>
+      <text class="setting-value">{{currentWeight}} {{unitLabel}}</text>
     </view>
-
     <button class="btn-primary" bindtap="saveGoal">保存目标</button>
   </view>
 
@@ -51,11 +64,4 @@
     </view>
   </view>
 
-  <!-- 关于 -->
-  <view class="card about-card">
-    <view class="setting-row">
-      <text class="setting-label">版本</text>
-      <text class="setting-value">1.0.0</text>
-    </view>
-  </view>
 </view>

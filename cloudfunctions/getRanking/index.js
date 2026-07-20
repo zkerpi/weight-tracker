@@ -1,5 +1,5 @@
 const cloud = require('wx-server-sdk')
-cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+cloud.init({ env: "cloud1-d9ghzs2af437701c3" })
 const db = cloud.database()
 
 function getToday() {
@@ -91,16 +91,33 @@ exports.main = async (event, context) => {
 
       // 减重/增重幅度
       const goalType = user.goalType || 'lose'
+      const baselineWeight = user.initialWeight || firstWeight
       let totalChange = 0
       let changePercent = 0
 
-      if (firstWeight && currentWeight && firstWeight !== currentWeight) {
+      if (baselineWeight && currentWeight && baselineWeight !== currentWeight) {
         totalChange = goalType === 'lose'
-          ? Math.round((firstWeight - currentWeight) * 100) / 100
-          : Math.round((currentWeight - firstWeight) * 100) / 100
-        changePercent = firstWeight > 0
-          ? Math.round((totalChange / firstWeight) * 10000) / 100
-          : 0
+          ? Math.round((baselineWeight - currentWeight) * 100) / 100
+          : Math.round((currentWeight - baselineWeight) * 100) / 100
+
+        // 优先按目标完成度计算百分比
+        const goalWeight = user.goalWeight
+        if (goalWeight && goalWeight > 0) {
+          const goalDiff = goalType === 'lose'
+            ? baselineWeight - goalWeight
+            : goalWeight - baselineWeight
+          if (goalDiff > 0) {
+            const raw = Math.round((totalChange / goalDiff) * 10000) / 100
+            changePercent = Math.max(0, Math.min(100, raw))
+          } else {
+            changePercent = 0
+          }
+        } else {
+          // 没有目标体重，回退到按初始体重的百分比
+          changePercent = baselineWeight > 0
+            ? Math.round((totalChange / baselineWeight) * 10000) / 100
+            : 0
+        }
       }
 
       return {

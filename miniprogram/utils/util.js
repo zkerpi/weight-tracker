@@ -56,6 +56,22 @@ function debounce(fn, delay = 300) {
   }
 }
 
+// 单位转换
+const UNIT = { KG: 'kg', JIN: 'jin' }
+
+function displayWeight(kg, unit) {
+  if (kg === null || kg === undefined || isNaN(kg)) return '-'
+  return unit === UNIT.JIN ? (kg * 2).toFixed(1) : kg.toFixed(1)
+}
+
+function displayUnit(unit) {
+  return unit === UNIT.JIN ? '斤' : '公斤'
+}
+
+function toKg(value, unit) {
+  return unit === UNIT.JIN ? value / 2 : value
+}
+
 module.exports = {
   formatDate,
   getToday,
@@ -67,5 +83,9 @@ module.exports = {
   showError,
   showLoading,
   hideLoading,
-  debounce
+  debounce,
+  UNIT,
+  displayWeight,
+  displayUnit,
+  toKg
 }

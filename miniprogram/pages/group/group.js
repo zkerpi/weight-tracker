@@ -114,6 +114,29 @@ Page({
     }
   },
 
+  copyInviteCode() {
+    if (this.data.myGroup && this.data.myGroup.inviteCode) {
+      wx.setClipboardData({
+        data: this.data.myGroup.inviteCode,
+        tip: '邀请码已复制'
+      })
+    }
+  },
+
+  onShareAppMessage() {
+    const group = this.data.myGroup
+    if (group) {
+      return {
+        title: `加入「${group.groupName}」一起打卡减重吧！邀请码：${group.inviteCode}`,
+        path: '/pages/group/group'
+      }
+    }
+    return {
+      title: '来轻量级好友一起打卡减重吧！',
+      path: '/pages/group/group'
+    }
+  },
+
   async leaveGroup() {
     wx.showModal({
       title: '退出群组',
@@ -122,36 +145,17 @@ Page({
         if (res.confirm) {
           util.showLoading()
           try {
-            const db = wx.cloud.database()
-            const app = getApp()
-            const user = app.globalData.userInfo
-
-            if (user && user.groupId) {
-              // 从群组中移除
-              const groupRes = await db.collection('groups').doc(user.groupId).get()
-              if (groupRes.data) {
-                const members = (groupRes.data.members || []).filter(m => m !== user.openId)
-                await db.collection('groups').doc(user.groupId).update({
-                  data: { members }
-                })
-              }
-
-              // 清空用户的 groupId
-              const userRes = await db.collection('users')
-                .where({ openId: user.openId })
-                .get()
-              if (userRes.data.length > 0) {
-                await db.collection('users').doc(userRes.data[0]._id).update({
-                  data: { groupId: null }
-                })
-              }
-
+            const res = await wx.cloud.callFunction({ name: 'leaveGroup', data: {} })
+            if (res.result.code === 0) {
+              const app = getApp()
+              const user = app.globalData.userInfo
               user.groupId = null
               app.setUserInfo(user)
+              util.showSuccess('已退出')
+              this.setData({ myGroup: null })
+            } else {
+              util.showError(res.result.msg || '操作失败')
             }
-
-            util.showSuccess('已退出')
-            this.setData({ myGroup: null })
           } catch (err) {
             console.error(err)
             util.showError('操作失败')

@@ -1,5 +1,5 @@
 const cloud = require('wx-server-sdk')
-cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+cloud.init({ env: "cloud1-d9ghzs2af437701c3" })
 const db = cloud.database()
 
 exports.main = async (event, context) => {
@@ -21,6 +21,7 @@ exports.main = async (event, context) => {
         openId: OPENID,
         nickName: event.nickName || '用户',
         avatarUrl: event.avatarUrl || '',
+        setupDone: false,
         goalWeight: null,
         goalType: 'lose',
         groupId: null,
@@ -30,6 +31,13 @@ exports.main = async (event, context) => {
       user = { ...newUser, _id: res._id }
     } else {
       user = userRes.data[0]
+      // 兼容老用户：已有非默认昵称则标记 setupDone
+      if (user.setupDone === undefined && user.nickName && user.nickName !== '用户') {
+        user.setupDone = true
+        await db.collection('users').doc(user._id).update({
+          data: { setupDone: true }
+        })
+      }
       // 更新昵称和头像
       if (event.nickName || event.avatarUrl) {
         const updateData = {}

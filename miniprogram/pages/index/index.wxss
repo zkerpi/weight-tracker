@@ -73,6 +73,20 @@
   transition: width 0.3s;
 }
 
+.quote-card {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border-radius: var(--radius);
+  padding: 20rpx 28rpx;
+  margin-bottom: 20rpx;
+  text-align: center;
+}
+
+.quote-text {
+  font-size: 28rpx;
+  color: rgba(255,255,255,0.95);
+  line-height: 1.6;
+}
+
 .weight-card {
   text-align: center;
 }
@@ -130,6 +144,36 @@
   flex-direction: column;
   gap: 16rpx;
   margin-top: 10rpx;
+}
+
+.stats-row {
+  display: flex;
+  align-items: center;
+}
+
+.stats-col {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  border-right: 1rpx solid var(--border);
+}
+
+.stats-col:last-child {
+  border-right: none;
+}
+
+.stats-num {
+  font-size: 48rpx;
+  font-weight: 800;
+  color: var(--text);
+  display: block;
+}
+
+.stats-label {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  margin-top: 6rpx;
+  display: block;
 }
 
 .picker-btn {

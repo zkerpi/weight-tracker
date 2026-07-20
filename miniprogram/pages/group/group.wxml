@@ -27,7 +27,7 @@
       </view>
       <view class="group-detail-row">
         <text class="group-detail-label">邀请码</text>
-        <view class="invite-code-box">
+        <view class="invite-code-box" bindtap="copyInviteCode">
           <text class="invite-code">{{myGroup.inviteCode}}</text>
           <text class="copy-hint">点击复制</text>
         </view>
@@ -37,6 +37,9 @@
         <text class="group-detail-value">{{myGroup.members ? myGroup.members.length : 0}} 人</text>
       </view>
     </view>
-    <button class="btn-outline btn-danger-outline" bindtap="leaveGroup">退出群组</button>
+    <view class="btn-group">
+      <button class="btn-primary" open-type="share">邀请好友</button>
+      <button class="btn-outline btn-danger-outline" bindtap="leaveGroup">退出群组</button>
+    </view>
   </view>
 </view>

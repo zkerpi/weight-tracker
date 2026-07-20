@@ -10,6 +10,10 @@ Component({
     goalWeight: {
       type: Number,
       value: null
+    },
+    unitLabel: {
+      type: String,
+      value: 'kg'
     }
   },
 
@@ -67,7 +71,7 @@ Component({
           ctx.fillStyle = '#64748b'
           ctx.font = '24rpx sans-serif'
           ctx.textAlign = 'center'
-          ctx.fillText(validPoints[0].weight + ' kg', x, y + 30)
+          ctx.fillText(validPoints[0].weight + ' ' + this.properties.unitLabel, x, y + 30)
         }
         return
       }
@@ -138,7 +142,7 @@ Component({
         ctx.fillStyle = '#f59e0b'
         ctx.font = '20rpx sans-serif'
         ctx.textAlign = 'left'
-        ctx.fillText('目标 ' + goalWeight + 'kg', padding.left + chartW - 100, goalY - 8)
+        ctx.fillText('目标 ' + goalWeight + ' ' + this.properties.unitLabel, padding.left + chartW - 100, goalY - 8)
       }
 
       // 绘制折线
@@ -196,7 +200,7 @@ Component({
         ctx.fillStyle = '#1e293b'
         ctx.font = 'bold 22rpx sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText(latest.weight + ' kg', latest.x, latest.y - 16)
+        ctx.fillText(latest.weight + ' ' + this.properties.unitLabel, latest.x, latest.y - 16)
       }
     }
   }

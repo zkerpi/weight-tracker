@@ -1,23 +1,7 @@
 <view class="page">
-  <!-- 用户欢迎 -->
-  <view class="welcome-card card" wx:if="{{userInfo}}">
-    <view class="welcome-row">
-      <image class="avatar" src="{{userInfo.avatarUrl || '/images/profile.png'}}" mode="aspectFill"></image>
-      <view class="welcome-text">
-        <text class="welcome-name">{{userInfo.nickName || '用户'}}</text>
-        <text class="welcome-sub" wx:if="{{groupName}}">群组：{{groupName}}</text>
-        <text class="welcome-sub" wx:else>尚未加入群组</text>
-      </view>
-    </view>
-    <view class="progress-section" wx:if="{{userInfo.goalWeight && todayWeight}}">
-      <view class="progress-header">
-        <text class="progress-label">距目标</text>
-        <text class="progress-value {{progressClass}}">{{progressText}}</text>
-      </view>
-      <view class="progress-bar-bg">
-        <view class="progress-bar-fill" style="width: {{progressPercent}}%"></view>
-      </view>
-    </view>
+  <!-- 每日寄语 -->
+  <view class="quote-card">
+    <text class="quote-text">"{{dailyQuote}}"</text>
   </view>
 
   <!-- 今日体重 -->
@@ -28,7 +12,7 @@
     </view>
     <view class="weight-display" wx:if="{{todayWeight}}">
       <text class="weight-number">{{todayWeight}}</text>
-      <text class="weight-unit">kg</text>
+      <text class="weight-unit">{{unitLabel}}</text>
     </view>
     <view class="weight-empty" wx:else>
       <text class="weight-empty-text">今天还没打卡</text>
@@ -40,25 +24,16 @@
   </view>
 
   <!-- 统计卡片 -->
-  <view class="stat-grid">
-    <view class="stat-item">
-      <text class="stat-value">{{firstWeight || '-'}}</text>
-      <text class="stat-label">初始体重(kg)</text>
-    </view>
-    <view class="stat-item">
-      <text class="stat-value {{totalChange >= 0 ? 'text-primary' : 'text-danger'}}">
-        {{changeDisplay || '-'}}
-      </text>
-      <text class="stat-label">已减(kg)</text>
-    </view>
-    <view class="stat-item">
-      <text class="stat-value">{{totalDays || 0}}</text>
-      <text class="stat-label">打卡天数</text>
-    </view>
-    <view class="stat-item">
-      <text class="stat-value" wx:if="{{streak}}">{{streak}}</text>
-      <text class="stat-value" wx:else>0</text>
-      <text class="stat-label">连续打卡🔥</text>
+  <view class="card">
+    <view class="stats-row">
+      <view class="stats-col">
+        <text class="stats-num {{totalChange >= 0 ? 'text-primary' : 'text-danger'}}">{{changeDisplay || '-'}}{{unitLabel}}</text>
+        <text class="stats-label">已减</text>
+      </view>
+      <view class="stats-col">
+        <text class="stats-num">{{streak || 0}} 天</text>
+        <text class="stats-label">连续打卡</text>
+      </view>
     </view>
   </view>
 
@@ -73,7 +48,8 @@
     <trend-chart
       wx:if="{{chartData.length > 0}}"
       data="{{chartData}}"
-      goalWeight="{{userInfo.goalWeight}}"
+      goalWeight="{{displayGoalWeight}}"
+      unitLabel="{{unitLabel}}"
     ></trend-chart>
     <view class="empty-state" wx:else>
       <text>暂无数据</text>
@@ -81,9 +57,8 @@
     </view>
   </view>
 
-  <!-- 快去打卡按钮 -->
+  <!-- 加入群组 -->
   <view class="quick-actions">
     <button class="btn-outline" bindtap="goGroup" wx:if="{{!userInfo.groupId}}">加入/创建群组</button>
-    <button class="btn-outline" bindtap="goRank">查看排行榜</button>
   </view>
 </view>

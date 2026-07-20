@@ -24,6 +24,9 @@ Page({
 
       if (res.result.code === 0) {
         let ranking = res.result.data
+        const app = getApp()
+        const weightUnit = (app.globalData.userInfo && app.globalData.userInfo.weightUnit) || 'kg'
+        const unitLabel = util.displayUnit(weightUnit)
 
         // 根据当前tab排序
         if (this.data.activeTab === 'percent') {
@@ -32,10 +35,22 @@ Page({
           ranking.sort((a, b) => b.streak - a.streak)
         }
 
+        // 按显示单位转换
+        ranking = ranking.map(r => {
+          const rawChange = r.totalChange || 0
+          const absDisplay = weightUnit === 'jin' ? Math.abs(rawChange * 2).toFixed(1) : Math.abs(rawChange).toFixed(1)
+          return {
+            ...r,
+            currentWeight: r.currentWeight ? util.displayWeight(r.currentWeight, weightUnit) : null,
+            totalChange: rawChange,
+            changeDisplay: absDisplay
+          }
+        })
+
         // 过滤：只显示有记录的用户
         ranking = ranking.filter(r => r.totalDays > 0)
 
-        this.setData({ ranking, loading: false })
+        this.setData({ ranking, unitLabel, loading: false })
       } else {
         util.showError('获取排行失败')
         this.setData({ loading: false })

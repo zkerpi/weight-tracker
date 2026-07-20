@@ -1,17 +1,19 @@
 <view class="page record-page">
   <view class="card">
     <view class="record-header">
-      <text class="section-title">{{isUpdate ? '更新体重' : '今日打卡'}}</text>
-      <text class="record-date">{{currentDate}}</text>
+      <text class="section-title">{{isUpdate ? '更新体重' : '记录体重'}}</text>
+      <picker mode="date" value="{{currentDate}}" bindchange="onDateChange" end="{{todayDate}}">
+        <text class="record-date">{{currentDate}}</text>
+      </picker>
     </view>
 
     <view class="weight-input-area">
       <view class="weight-input-wrapper">
         <input class="weight-input" type="digit" placeholder="输入体重" value="{{weight}}" bindinput="onWeightInput" focus="{{!isUpdate}}" maxlength="5"></input>
-        <text class="weight-input-unit">kg</text>
+        <text class="weight-input-unit">{{unitLabel}}</text>
       </view>
       <text class="weight-hint" wx:if="{{!weight && !isUpdate}}">请输入今天早上的体重</text>
-      <text class="weight-hint" wx:elif="{{isUpdate}}">当前记录：{{existingWeight}} kg，输入新值修改</text>
+      <text class="weight-hint" wx:elif="{{isUpdate}}">当前记录：{{existingWeight}} {{unitLabel}}，输入新值修改</text>
     </view>
 
     <view class="quick-weights">
@@ -29,14 +31,28 @@
     <!-- 历史体重提醒 -->
     <view class="weight-compare" wx:if="{{showCompare}}">
       <text wx:if="{{weightUp}}" class="compare-up">
-        较上次 +{{diffFormatted}} kg ↑
+        较上次 +{{diffFormatted}} {{unitLabel}} ↑
       </text>
       <text wx:elif="{{weightDown}}" class="compare-down">
-        较上次 {{diffFormatted}} kg ↓
+        较上次 {{diffFormatted}} {{unitLabel}} ↓
       </text>
       <text wx:else class="compare-same">
         与上次持平
       </text>
     </view>
   </view>
+
+  <!-- 打卡成功分享 -->
+  <view class="share-overlay" wx:if="{{showShareBtn}}">
+    <view class="share-card">
+      <text class="share-title">打卡成功！</text>
+      <text class="share-weight">{{displayedWeight}} {{unitLabel}}</text>
+      <text class="share-date">{{currentDate}}</text>
+      <text class="share-msg">{{shareMsg}}</text>
+      <button class="btn-primary" open-type="share">分享到微信</button>
+      <text class="share-skip" bindtap="closeShare">稍后再说</text>
+    </view>
+  </view>
+
+  <canvas type="2d" id="shareCanvas" style="width: 375px; height: 500px; position: fixed; left: -9999px; top: 0; z-index: -1;"></canvas>
 </view>
