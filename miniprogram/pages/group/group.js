@@ -24,31 +24,41 @@ Page({
   },
 
   async loadMyGroup() {
-    this.setData({ groupLoading: true })
+    const app = getApp()
+    const user = app.globalData.userInfo
+
+    if (!user || !user.groupId) {
+      this.setData({ myGroup: null, members: [], groupLoading: false })
+      return
+    }
+
+    // 从缓存读取（瞬间显示）
+    const cache = app.globalData.groupCache
+    if (cache && cache.groupId === user.groupId) {
+      this.setData({ myGroup: cache.group, members: cache.members, groupLoading: false })
+    } else {
+      this.setData({ groupLoading: true })
+      util.showLoading()
+    }
+
+    // 后台刷新
     try {
-      const app = getApp()
-      const user = app.globalData.userInfo
-
-      if (user && user.groupId) {
-        const res = await wx.cloud.callFunction({
-          name: 'getGroupMembers',
-          data: { groupId: user.groupId }
-        })
-
-        if (res.result.code === 0) {
-          const { group, members } = res.result.data
-          this.setData({ myGroup: group, members })
-        } else {
-          this.setData({ myGroup: null, members: [] })
-        }
-      } else {
-        this.setData({ myGroup: null, members: [] })
+      const res = await wx.cloud.callFunction({
+        name: 'getGroupMembers',
+        data: { groupId: user.groupId }
+      })
+      util.hideLoading()
+      if (res.result.code === 0) {
+        const { group, members } = res.result.data
+        app.globalData.groupCache = { groupId: user.groupId, group, members }
+        this.setData({ myGroup: group, members, groupLoading: false })
       }
     } catch (err) {
+      util.hideLoading()
       console.error(err)
-      this.setData({ myGroup: null, members: [] })
-    } finally {
-      this.setData({ groupLoading: false })
+      if (!cache) {
+        this.setData({ myGroup: null, members: [], groupLoading: false })
+      }
     }
   },
 

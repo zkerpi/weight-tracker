@@ -1,11 +1,6 @@
 <view class="page">
-  <!-- 加载中 -->
-  <view class="loading-state" wx:if="{{groupLoading}}">
-    <text>加载中...</text>
-  </view>
-
   <!-- 创建群组 -->
-  <view class="card" wx:elif="{{!myGroup}}">
+  <view class="card" wx:if="{{!myGroup}}">
     <text class="section-title">创建群组</text>
     <view class="form-row">
       <input class="input-field" placeholder="输入群组名称" value="{{groupName}}" bindinput="onGroupNameInput" maxlength="20"></input>
@@ -14,7 +9,7 @@
   </view>
 
   <!-- 加入群组 -->
-  <view class="card" wx:elif="{{!myGroup}}">
+  <view class="card" wx:if="{{!myGroup}}">
     <text class="section-title">加入群组</text>
     <view class="form-row">
       <input class="input-field code-input" placeholder="输入4位邀请码" value="{{inviteCode}}" bindinput="onInviteCodeInput" maxlength="4"></input>

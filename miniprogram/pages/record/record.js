@@ -172,8 +172,9 @@ Page({
       })
 
       if (res.result.code === 0) {
-        // 标记首页下次onShow需要刷新数据
+        // 标记首页和排名页下次需要刷新数据
         getApp().globalData.needsRefresh = true
+        getApp().globalData.rankingCache = null
 
         const displayedWeight = util.displayWeight(weightKg, this.data.weightUnit)
         const msgs = [

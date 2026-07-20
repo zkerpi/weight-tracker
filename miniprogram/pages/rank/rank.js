@@ -11,8 +11,31 @@ Page({
     this.loadRanking()
   },
 
+  _processRanking(raw, activeTab, weightUnit) {
+    // 根据当前tab排序
+    if (activeTab === 'percent') {
+      raw.sort((a, b) => b.changePercent - a.changePercent)
+    } else if (activeTab === 'streak') {
+      raw.sort((a, b) => b.streak - a.streak)
+    }
+
+    // 按显示单位转换
+    const unitLabel = util.displayUnit(weightUnit)
+    const ranking = raw.map(r => {
+      const rawChange = r.totalChange || 0
+      const absDisplay = weightUnit === 'jin' ? Math.abs(rawChange * 2).toFixed(1) : Math.abs(rawChange).toFixed(1)
+      return {
+        ...r,
+        currentWeight: r.currentWeight ? util.displayWeight(r.currentWeight, weightUnit) : null,
+        totalChange: rawChange,
+        changeDisplay: absDisplay
+      }
+    }).filter(r => r.totalDays > 0)
+
+    this.setData({ ranking, unitLabel, loading: false })
+  },
+
   async loadRanking() {
-    this.setData({ loading: true })
     try {
       const app = getApp()
       const groupId = app.globalData.groupId
@@ -22,48 +45,32 @@ Page({
         return
       }
 
+      const weightUnit = (app.globalData.userInfo && app.globalData.userInfo.weightUnit) || 'kg'
+      const activeTab = this.data.activeTab
+
+      // 有缓存且不需要刷新 → 直接显示
+      const cache = app.globalData.rankingCache
+      if (cache && cache.groupId === groupId && !app.globalData.needsRefresh) {
+        this._processRanking([...cache.raw], activeTab, weightUnit)
+      } else {
+        this.setData({ loading: true })
+      }
+
+      // 后台拉取最新数据
       const res = await wx.cloud.callFunction({
         name: 'getRanking',
         data: { groupId }
       })
 
       if (res.result.code === 0) {
-        let ranking = res.result.data
-        const app = getApp()
-        const weightUnit = (app.globalData.userInfo && app.globalData.userInfo.weightUnit) || 'kg'
-        const unitLabel = util.displayUnit(weightUnit)
-
-        // 根据当前tab排序
-        if (this.data.activeTab === 'percent') {
-          ranking.sort((a, b) => b.changePercent - a.changePercent)
-        } else if (this.data.activeTab === 'streak') {
-          ranking.sort((a, b) => b.streak - a.streak)
-        }
-
-        // 按显示单位转换
-        ranking = ranking.map(r => {
-          const rawChange = r.totalChange || 0
-          const absDisplay = weightUnit === 'jin' ? Math.abs(rawChange * 2).toFixed(1) : Math.abs(rawChange).toFixed(1)
-          return {
-            ...r,
-            currentWeight: r.currentWeight ? util.displayWeight(r.currentWeight, weightUnit) : null,
-            totalChange: rawChange,
-            changeDisplay: absDisplay
-          }
-        })
-
-        // 过滤：只显示有记录的用户
-        ranking = ranking.filter(r => r.totalDays > 0)
-
-        this.setData({ ranking, unitLabel, loading: false })
-      } else {
-        util.showError('获取排行失败')
-        this.setData({ loading: false })
+        app.globalData.rankingCache = { groupId, raw: res.result.data }
+        this._processRanking(res.result.data, activeTab, weightUnit)
       }
     } catch (err) {
       console.error(err)
-      util.showError('网络错误')
-      this.setData({ loading: false })
+      if (!app.globalData.rankingCache) {
+        this.setData({ ranking: [], loading: false })
+      }
     }
   },
 
@@ -71,6 +78,15 @@ Page({
     const tab = e.currentTarget.dataset.tab
     if (tab === this.data.activeTab) return
     this.setData({ activeTab: tab })
-    this.loadRanking()
+
+    // 走缓存重新排序，不请求云函数
+    const app = getApp()
+    const cache = app.globalData.rankingCache
+    if (cache) {
+      const weightUnit = (app.globalData.userInfo && app.globalData.userInfo.weightUnit) || 'kg'
+      this._processRanking([...cache.raw], tab, weightUnit)
+    } else {
+      this.loadRanking()
+    }
   }
 })

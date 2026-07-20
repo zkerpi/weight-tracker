@@ -3,7 +3,8 @@ App({
     userInfo: null,
     openId: null,
     groupId: null,
-    needsRefresh: false
+    needsRefresh: false,
+    groupCache: null
   },
 
   onLaunch() {
