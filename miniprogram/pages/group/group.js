@@ -7,7 +7,8 @@ Page({
     inviteCode: '',
     inviteCodeValid: false,
     myGroup: null,
-    members: []
+    members: [],
+    groupLoading: true
   },
 
   onLoad(query) {
@@ -23,6 +24,7 @@ Page({
   },
 
   async loadMyGroup() {
+    this.setData({ groupLoading: true })
     try {
       const app = getApp()
       const user = app.globalData.userInfo
@@ -45,6 +47,8 @@ Page({
     } catch (err) {
       console.error(err)
       this.setData({ myGroup: null, members: [] })
+    } finally {
+      this.setData({ groupLoading: false })
     }
   },
 

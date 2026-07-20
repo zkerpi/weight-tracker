@@ -4,6 +4,7 @@ Component({
       type: Array,
       value: [],
       observer() {
+        this._selectedIdx = -1
         this.drawChart()
       }
     },
@@ -19,6 +20,8 @@ Component({
 
   lifetimes: {
     attached() {
+      this._selectedIdx = -1
+      this._points = []
       // 等DOM准备好再画
       setTimeout(() => this.drawChart(), 100)
     }
@@ -31,23 +34,27 @@ Component({
 
       if (chartData.length === 0) return
 
+      if (this._ctx) {
+        this.renderChart(this._ctx, chartData, goalWeight, this._canvasWidth, this._canvasHeight)
+        return
+      }
+
       const query = this.createSelectorQuery()
       query.select('#trendCanvas')
         .fields({ node: true, size: true })
         .exec((res) => {
           if (!res || !res[0]) return
           const canvas = res[0].node
-          const ctx = canvas.getContext('2d')
-
           const dpr = wx.getSystemInfoSync().pixelRatio
           const width = res[0].width
           const height = res[0].height
-
           canvas.width = width * dpr
           canvas.height = height * dpr
-          ctx.scale(dpr, dpr)
-
-          this.renderChart(ctx, chartData, goalWeight, width, height)
+          this._ctx = canvas.getContext('2d')
+          this._ctx.scale(dpr, dpr)
+          this._canvasWidth = width
+          this._canvasHeight = height
+          this.renderChart(this._ctx, chartData, goalWeight, width, height)
         })
     },
 
@@ -154,6 +161,8 @@ Component({
         }
         return { x, y, weight: d.weight }
       })
+      // 保存点坐标供点击检测
+      this._points = points
 
       // 连接有效点
       ctx.strokeStyle = '#10b981'
@@ -194,13 +203,98 @@ Component({
         }
       }
 
-      // 标注最新体重
-      const latest = points[points.length - 1]
-      if (latest && latest.y !== null) {
-        ctx.fillStyle = '#1e293b'
-        ctx.font = 'bold 22rpx sans-serif'
+      // 标注选中点或最新体重
+      const selectedIdx = this._selectedIdx
+      if (selectedIdx >= 0 && selectedIdx < points.length && points[selectedIdx] && points[selectedIdx].y !== null) {
+        const sp = points[selectedIdx]
+
+        // 虚线指示线
+        ctx.save()
+        ctx.strokeStyle = 'rgba(16, 185, 129, 0.25)'
+        ctx.lineWidth = 1
+        ctx.setLineDash([4, 4])
+        ctx.beginPath()
+        ctx.moveTo(sp.x, sp.y)
+        ctx.lineTo(sp.x, padding.top + chartH)
+        ctx.stroke()
+        ctx.restore()
+
+        // 外圈光晕
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.1)'
+        ctx.beginPath()
+        ctx.arc(sp.x, sp.y, 12, 0, Math.PI * 2)
+        ctx.fill()
+
+        // 选中圆点
+        ctx.fillStyle = '#10b981'
+        ctx.beginPath()
+        ctx.arc(sp.x, sp.y, 7, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = '#ffffff'
+        ctx.beginPath()
+        ctx.arc(sp.x, sp.y, 3, 0, Math.PI * 2)
+        ctx.fill()
+
+        // 体重标签
+        ctx.fillStyle = '#10b981'
+        ctx.font = 'bold 24rpx sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText(latest.weight + ' ' + this.properties.unitLabel, latest.x, latest.y - 16)
+        ctx.fillText(sp.weight + ' ' + this.properties.unitLabel, sp.x, sp.y - 22)
+      } else {
+        const latest = points[points.length - 1]
+        if (latest && latest.y !== null) {
+          ctx.fillStyle = '#1e293b'
+          ctx.font = 'bold 22rpx sans-serif'
+          ctx.textAlign = 'center'
+          ctx.fillText(latest.weight + ' ' + this.properties.unitLabel, latest.x, latest.y - 16)
+        }
+      }
+    },
+
+    onTouchStart(e) {
+      if (!this._points || this._points.length === 0) return
+      const query = this.createSelectorQuery()
+      query.select('#trendCanvas').boundingClientRect()
+      query.exec(res => {
+        if (!res || !res[0]) return
+        this._canvasRect = res[0]
+        this._handleTouch(e)
+      })
+    },
+
+    onTouchMove(e) {
+      if (!this._canvasRect) return
+      this._handleTouch(e)
+    },
+
+    onTouchEnd() {
+      // 保持最后选中的点
+    },
+
+    _handleTouch(e) {
+      const rect = this._canvasRect
+      if (!rect) return
+      const touch = e.changedTouches && e.changedTouches[0]
+      if (!touch) return
+      const tapX = touch.pageX - rect.left
+
+      // 找X轴最近的有效点（手指滑过时按X坐标定位）
+      let minDist = Infinity
+      let nearestIdx = -1
+      for (let i = 0; i < this._points.length; i++) {
+        const p = this._points[i]
+        if (p.y === null) continue
+        const dist = Math.abs(tapX - p.x)
+        if (dist < minDist) {
+          minDist = dist
+          nearestIdx = i
+        }
+      }
+
+      const newIdx = (nearestIdx >= 0 && minDist <= 200) ? nearestIdx : -1
+      if (newIdx !== this._selectedIdx) {
+        this._selectedIdx = newIdx
+        this.drawChart()
       }
     }
   }

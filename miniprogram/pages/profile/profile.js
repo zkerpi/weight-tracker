@@ -39,28 +39,24 @@ Page({
         return
       }
 
-      // 获取群组名称
-      let groupName = ''
-      if (user.groupId) {
-        try {
-          const db = wx.cloud.database()
-          const groupRes = await db.collection('groups').doc(user.groupId).get()
-          groupName = groupRes.data.groupName || ''
-        } catch (e) {}
-      }
-
-      // 获取打卡统计
+      // 并行查询：群组名称、打卡统计、最后一条记录
       const db = wx.cloud.database()
-      const countRes = await db.collection('records')
-        .where({ openId: user.openId })
-        .count()
-      const totalDays = countRes.total
+      const [groupResult, countRes, lastRes] = await Promise.all([
+        user.groupId
+          ? db.collection('groups').doc(user.groupId).get().catch(() => ({ data: null }))
+          : Promise.resolve({ data: null }),
+        db.collection('records')
+          .where({ openId: user.openId })
+          .count(),
+        db.collection('records')
+          .where({ openId: user.openId })
+          .orderBy('date', 'desc')
+          .limit(1)
+          .get()
+      ])
 
-      const lastRes = await db.collection('records')
-        .where({ openId: user.openId })
-        .orderBy('date', 'desc')
-        .limit(1)
-        .get()
+      const groupName = groupResult.data ? groupResult.data.groupName || '' : ''
+      const totalDays = countRes.total
       const currentWeight = lastRes.data.length > 0 ? lastRes.data[0].weight : null
       const weightUnit = user.weightUnit || 'kg'
       const unitLabel = util.displayUnit(weightUnit)
@@ -84,7 +80,6 @@ Page({
         avatarTempUrl: '',
         weightUnit,
         unitLabel,
-        goalType: user.goalType || 'lose',
         goalType: user.goalType || 'lose',
         goalWeightText: user.goalWeight ? util.displayWeight(user.goalWeight, weightUnit) : '',
         initialWeightText: user.initialWeight ? util.displayWeight(user.initialWeight, weightUnit) : '',
@@ -210,13 +205,13 @@ Page({
     util.showLoading('保存中...')
     try {
       const cloudData = {
-        goalWeight: Math.round(util.toKg(goalWeight, this.data.weightUnit) * 10) / 10,
+        goalWeight: Math.round(util.toKg(goalWeight, this.data.weightUnit) * 100) / 100,
         goalType: this.data.goalType,
         weightUnit: this.data.weightUnit
       }
       const initialWeight = parseFloat(this.data.initialWeightText)
       if (initialWeight > 0 && initialWeight <= 300) {
-        cloudData.initialWeight = Math.round(util.toKg(initialWeight, this.data.weightUnit) * 10) / 10
+        cloudData.initialWeight = Math.round(util.toKg(initialWeight, this.data.weightUnit) * 100) / 100
       }
 
       const res = await wx.cloud.callFunction({

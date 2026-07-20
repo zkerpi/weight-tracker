@@ -30,30 +30,30 @@ Page({
     util.showLoading()
     try {
       const app = getApp()
-      const user = app.globalData.userInfo
+      let user = app.globalData.userInfo
 
       if (!user) {
         const res = await wx.cloud.callFunction({ name: 'login', data: {} })
         if (res.result.code === 0) {
-          app.setUserInfo(res.result.data)
+          user = res.result.data
+          app.setUserInfo(user)
         }
       }
 
-      const finalUser = app.globalData.userInfo
-      if (!finalUser) {
+      if (!user) {
         util.showError('获取用户信息失败')
         return
       }
 
-      this.setData({ userInfo: finalUser })
+      this.setData({ userInfo: user })
 
-      const weightUnit = finalUser.weightUnit || 'kg'
+      const weightUnit = user.weightUnit || 'kg'
       const unitLabel = util.displayUnit(weightUnit)
 
       // 查询已有记录
       const db = wx.cloud.database()
       const recordsRes = await db.collection('records')
-        .where({ openId: finalUser.openId })
+        .where({ openId: user.openId })
         .orderBy('date', 'desc')
         .limit(3)
         .get()
@@ -68,7 +68,7 @@ Page({
       const lastWeightKg = lastRecord ? lastRecord.weight : null
 
       // 生成快捷体重选项（显示单位）
-      const goalWeight = finalUser.goalWeight
+      const goalWeight = user.goalWeight
       let quickWeights = []
       if (lastWeightKg) {
         const last = parseFloat(util.displayWeight(lastWeightKg, weightUnit))
@@ -162,7 +162,7 @@ Page({
 
     util.showLoading('提交中...')
     try {
-      const weightKg = Math.round(util.toKg(weight, this.data.weightUnit) * 10) / 10
+      const weightKg = Math.round(util.toKg(weight, this.data.weightUnit) * 100) / 100
       const res = await wx.cloud.callFunction({
         name: 'recordWeight',
         data: {
@@ -172,6 +172,9 @@ Page({
       })
 
       if (res.result.code === 0) {
+        // 标记首页下次onShow需要刷新数据
+        getApp().globalData.needsRefresh = true
+
         const displayedWeight = util.displayWeight(weightKg, this.data.weightUnit)
         const msgs = [
           '持之以恒，终见成效',

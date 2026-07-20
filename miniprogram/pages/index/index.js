@@ -154,34 +154,23 @@ Page({
     try {
       const app = getApp()
 
-      // 获取用户信息
-      const loginRes = await wx.cloud.callFunction({
-        name: 'login',
-        data: {}
-      })
-      if (loginRes.result.code !== 0) {
-        util.showError('获取用户信息失败')
-        return
-      }
-
-      const user = loginRes.result.data
-      app.setUserInfo(user)
-
-      // 获取群组名称
-      let groupName = ''
-      if (user.groupId) {
-        try {
-          const db = wx.cloud.database()
-          const groupRes = await db.collection('groups').doc(user.groupId).get()
-          groupName = groupRes.data.groupName || ''
-        } catch (e) {
-          // 群组可能已被删除
+      // 使用缓存的用户信息，避免重复调用login云函数
+      let user = app.globalData.userInfo
+      if (!user) {
+        const loginRes = await wx.cloud.callFunction({
+          name: 'login',
+          data: {}
+        })
+        if (loginRes.result.code !== 0) {
+          util.showError('获取用户信息失败')
+          return
         }
+        user = loginRes.result.data
+        app.setUserInfo(user)
       }
 
       this.setData({
         userInfo: user,
-        groupName,
         todayDate: util.getToday()
       })
 
@@ -200,13 +189,31 @@ Page({
         })
       }
 
-      // 获取用户的打卡记录
+      // 判断是否需要强制刷新（从记录页修改后返回时）
+      const forceRefresh = app.globalData.needsRefresh
+      app.globalData.needsRefresh = false
+      const cacheOpt = forceRefresh ? { cacheTime: 0 } : {}
+
+      // 并行查询：群组名称、所有记录、今日体重
       const db = wx.cloud.database()
-      const recordsRes = await db.collection('records')
-        .where({ openId: user.openId })
-        .orderBy('date', 'asc')
-        .get()
+      const [groupNameResult, recordsRes, todayRes] = await Promise.all([
+        user.groupId
+          ? db.collection('groups').doc(user.groupId).get().catch(() => ({ data: null }))
+          : Promise.resolve({ data: null }),
+        db.collection('records')
+          .where({ openId: user.openId })
+          .orderBy('date', 'asc')
+          .get(cacheOpt),
+        db.collection('records')
+          .where({ openId: user.openId, date: util.getToday() })
+          .limit(1)
+          .get(cacheOpt)
+      ])
+
+      const groupName = groupNameResult.data ? groupNameResult.data.groupName || '' : ''
       const records = recordsRes.data
+      const todayWeight = todayRes.data.length > 0 ? todayRes.data[0].weight : null
+      this.setData({ groupName })
 
       const weightUnit = user.weightUnit || 'kg'
       const unitLabel = util.displayUnit(weightUnit)
@@ -214,7 +221,6 @@ Page({
       if (records.length > 0) {
         const baselineWeight = user.initialWeight || records[0].weight
         const latestRecord = records[records.length - 1]
-        const todayWeight = latestRecord.date === util.getToday() ? latestRecord.weight : null
 
         console.log('[debug] initialWeight:', user.initialWeight, 'baseline:', baselineWeight, 'latest:', latestRecord.weight)
         let streak = 0
@@ -231,9 +237,11 @@ Page({
         }
 
       const goalType = user.goalType || 'lose'
+      // 优先用独立查询的今日体重（避免缓存问题），无今日记录时回退到 records
+      const latestWeight = todayWeight !== null ? todayWeight : latestRecord.weight
       const totalChange = goalType === 'lose'
-        ? Math.round((baselineWeight - latestRecord.weight) * 100) / 100
-        : Math.round((latestRecord.weight - baselineWeight) * 100) / 100
+        ? Math.round((baselineWeight - latestWeight) * 100) / 100
+        : Math.round((latestWeight - baselineWeight) * 100) / 100
 
       const absChange = Math.abs(totalChange)
       const displayAbs = weightUnit === 'jin' ? (absChange * 2).toFixed(1) : absChange.toFixed(1)
@@ -251,7 +259,7 @@ Page({
         let progressClass = ''
         let progressPercent = 0
         if (user.goalWeight && baselineWeight > 0) {
-          const diff = latestRecord.weight - user.goalWeight
+          const diff = latestWeight - user.goalWeight
           if (diff <= 0) {
             progressText = '🎉 目标达成！'
             progressClass = ''
@@ -261,8 +269,8 @@ Page({
               ? Math.abs(baselineWeight - user.goalWeight)
               : Math.abs(user.goalWeight - baselineWeight)
             const achieved = goalType === 'lose'
-              ? baselineWeight - latestRecord.weight
-              : latestRecord.weight - baselineWeight
+              ? baselineWeight - latestWeight
+              : latestWeight - baselineWeight
             if (total > 0) {
               progressPercent = Math.min(99, Math.round(achieved / total * 100))
               const displayGoal = user.goalWeight ? util.displayWeight(user.goalWeight, weightUnit) : null
@@ -342,7 +350,8 @@ Page({
       db.collection('records')
         .where({ openId: user.openId })
         .orderBy('date', 'asc')
-        .get()
+        .limit(1000)
+        .get({ cacheTime: 0 })
         .then(res => {
           this.loadChartData(res.data, idx, this.data.weightUnit)
         })

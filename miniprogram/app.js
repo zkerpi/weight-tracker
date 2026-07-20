@@ -2,7 +2,8 @@ App({
   globalData: {
     userInfo: null,
     openId: null,
-    groupId: null
+    groupId: null,
+    needsRefresh: false
   },
 
   onLaunch() {

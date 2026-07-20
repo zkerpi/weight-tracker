@@ -22,12 +22,13 @@ function getYesterday(dateStr) {
 exports.main = async (event, context) => {
   const { groupId } = event
 
+  if (!groupId) {
+    return { code: 0, data: [] }
+  }
+
   try {
-    // 获取用户列表（按群组筛选或全部）
-    let userQuery = {}
-    if (groupId) {
-      userQuery = { groupId: groupId }
-    }
+    // 获取群组成员
+    const userQuery = { groupId: groupId }
     const userRes = await db.collection('users')
       .where(userQuery)
       .get()

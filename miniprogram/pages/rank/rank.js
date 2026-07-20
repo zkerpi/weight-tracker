@@ -17,6 +17,11 @@ Page({
       const app = getApp()
       const groupId = app.globalData.groupId
 
+      if (!groupId) {
+        this.setData({ ranking: [], loading: false })
+        return
+      }
+
       const res = await wx.cloud.callFunction({
         name: 'getRanking',
         data: { groupId }
