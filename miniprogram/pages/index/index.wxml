@@ -89,10 +89,4 @@
       <text>开始打卡后将显示趋势图</text>
     </view>
   </view>
-
-  <!-- 群组 -->
-  <view class="quick-actions">
-    <button class="btn-outline" bindtap="goGroup" wx:if="{{!userInfo.groupId}}">加入/创建群组</button>
-    <button class="btn-outline" bindtap="goGroup" wx:if="{{userInfo.groupId}}">查看群组</button>
-  </view>
 </view>
