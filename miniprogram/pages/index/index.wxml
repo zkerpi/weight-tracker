@@ -41,35 +41,40 @@
     </view>
   </view>
 
-  <!-- 周/月统计 -->
-  <view class="card" wx:if="{{weekStats && weekStats.avg}}">
-    <view class="summary-tabs">
-      <view class="summary-tab active">
-        <text class="summary-tab-title">本周</text>
-        <view class="summary-row">
-          <text class="summary-label">平均</text>
-          <text class="summary-value">{{weekStats.avg}} {{unitLabel}}</text>
-        </view>
-        <view class="summary-row">
-          <text class="summary-label">变化</text>
-          <text class="summary-change {{weekStats.isUp ? 'text-danger' : ''}} {{weekStats.isDown ? 'text-primary' : ''}}">{{weekStats.change}} {{unitLabel}}</text>
-        </view>
+  <!-- 趋势图 -->
+  <view class="card">
+    <view class="card-row">
+      <text class="section-title">体重趋势</text>
+      <picker mode="selector" range="{{chartRanges}}" value="{{chartRangeIndex}}" bindchange="onChartRangeChange">
+        <view class="picker-btn">{{chartRanges[chartRangeIndex]}} ▾</view>
+      </picker>
+    </view>
+    <trend-chart
+      wx:if="{{chartData.length > 0}}"
+      data="{{chartData}}"
+      goalWeight="{{displayGoalWeight}}"
+      unitLabel="{{unitLabel}}"
+      goalType="{{goalType}}"
+    ></trend-chart>
+    <view class="empty-state" wx:else>
+      <text>暂无数据</text>
+      <text>开始打卡后将显示趋势图</text>
+    </view>
+    <!-- 周/月统计 -->
+    <view wx:if="{{weekStats && weekStats.avg}}" class="chart-stats">
+      <view class="chart-stats-col">
+        <text class="chart-stats-label">周均</text>
+        <text class="chart-stats-value">{{weekStats.avg}}</text>
+        <text class="chart-stats-change {{weekStats.isUp ? 'text-danger' : ''}} {{weekStats.isDown ? 'text-primary' : ''}}">{{weekStats.change}}</text>
       </view>
-      <view class="summary-tab">
-        <text class="summary-tab-title">本月</text>
-        <view class="summary-row">
-          <text class="summary-label">平均</text>
-          <text class="summary-value">{{monthStats.avg}} {{unitLabel}}</text>
-        </view>
-        <view class="summary-row">
-          <text class="summary-label">变化</text>
-          <text class="summary-change {{monthStats.isUp ? 'text-danger' : ''}} {{monthStats.isDown ? 'text-primary' : ''}}">{{monthStats.change}} {{unitLabel}}</text>
-        </view>
+      <view class="chart-stats-col">
+        <text class="chart-stats-label">月均</text>
+        <text class="chart-stats-value">{{monthStats.avg}}</text>
+        <text class="chart-stats-change {{monthStats.isUp ? 'text-danger' : ''}} {{monthStats.isDown ? 'text-primary' : ''}}">{{monthStats.change}}</text>
       </view>
     </view>
   </view>
-
-  <!-- 趋势图 -->
+</view>
   <view class="card">
     <view class="card-row">
       <text class="section-title">体重趋势</text>
