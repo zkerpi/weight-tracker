@@ -3,7 +3,8 @@ const util = require('../../utils/util')
 Page({
   data: {
     records: [],
-    loading: true
+    loading: true,
+    gaps: []
   },
 
   onShow() {
@@ -28,6 +29,7 @@ Page({
       }
 
       const weightUnit = user.weightUnit || 'kg'
+      const unitLabel = util.displayUnit(weightUnit)
       const db = wx.cloud.database()
       const res = await db.collection('records')
         .where({ openId: user.openId })
@@ -51,13 +53,38 @@ Page({
         }
       })
 
-      this.setData({ records, loading: false, unitLabel: util.displayUnit(weightUnit) })
+      // 检测最近7天的补签缺口（最多显示3个）
+      const gaps = []
+      if (records.length > 0) {
+        const today = util.getToday()
+        const oldestDate = records[records.length - 1].date
+        // 从今天往前倒推7天
+        for (let i = 1; i <= 7; i++) {
+          const d = new Date()
+          d.setDate(d.getDate() - i)
+          const dateStr = util.formatDate(d)
+          if (dateStr < oldestDate) break // 不要超出最早记录
+          if (dateStr >= today) continue // 今天不补
+          const exists = records.some(r => r.date === dateStr)
+          if (!exists) {
+            gaps.push(dateStr)
+            if (gaps.length >= 3) break
+          }
+        }
+      }
+
+      this.setData({ records, gaps, loading: false, unitLabel })
     } catch (err) {
       console.error(err)
       util.showError('加载失败')
     } finally {
       util.hideLoading()
     }
+  },
+
+  goBackfill(e) {
+    const { date } = e.currentTarget.dataset
+    wx.navigateTo({ url: `/pages/record/record?date=${date}` })
   },
 
   onDeleteRecord(e) {

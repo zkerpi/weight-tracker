@@ -60,6 +60,53 @@
   color: var(--primary);
 }
 
+/* 补签横幅 */
+.backfill-banner {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: var(--radius);
+  padding: 20rpx 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.backfill-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #92400e;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.backfill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.backfill-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10rpx 16rpx;
+  background: rgba(255,255,255,0.6);
+  border-radius: 8rpx;
+}
+
+.backfill-item:active {
+  opacity: 0.7;
+}
+
+.backfill-date {
+  font-size: 26rpx;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.backfill-action {
+  font-size: 24rpx;
+  color: var(--primary);
+  font-weight: 600;
+}
+
 /* 骨架屏 */
 .skeleton-list {
   display: flex;

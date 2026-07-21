@@ -23,7 +23,10 @@ Page({
     diffFormatted: ''
   },
 
-  onLoad() {
+  onLoad(query) {
+    if (query && query.date) {
+      this.setData({ currentDate: query.date })
+    }
     this.loadUserStatus()
   },
 

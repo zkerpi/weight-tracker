@@ -8,25 +8,38 @@
     </view>
   </view>
 
-  <!-- 记录列表 -->
-  <view wx:elif="{{records.length > 0}}" class="history-list">
-    <view class="history-item" wx:for="{{records}}" wx:key="_id" data-id="{{item._id}}" data-date="{{item.date}}" bindlongpress="onDeleteRecord">
-      <view class="history-left">
-        <text class="history-date">{{item.date}}</text>
-        <text class="history-note" wx:if="{{item.note}}">{{item.note}}</text>
-      </view>
-      <view class="history-right">
-        <text class="history-weight">{{item.weight}} {{unitLabel}}</text>
-        <text class="history-diff {{item.diffUp ? 'diff-up' : ''}} {{item.diffDown ? 'diff-down' : ''}}">
-          {{item.diffFormatted}}
-        </text>
+  <block wx:else>
+    <!-- 补签提醒 -->
+    <view wx:if="{{gaps.length > 0}}" class="backfill-banner">
+      <text class="backfill-title">有 {{gaps.length}} 天未打卡</text>
+      <view class="backfill-list">
+        <view class="backfill-item" wx:for="{{gaps}}" wx:key="*this" bindtap="goBackfill" data-date="{{item}}">
+          <text class="backfill-date">{{item}}</text>
+          <text class="backfill-action">去补签 ›</text>
+        </view>
       </view>
     </view>
-  </view>
 
-  <!-- 空状态 -->
-  <view class="empty-state" wx:else>
-    <text>暂无记录</text>
-    <text>开始打卡后将显示在这里</text>
-  </view>
+    <!-- 记录列表 -->
+    <view wx:if="{{records.length > 0}}" class="history-list">
+      <view class="history-item" wx:for="{{records}}" wx:key="_id" data-id="{{item._id}}" data-date="{{item.date}}" bindlongpress="onDeleteRecord">
+        <view class="history-left">
+          <text class="history-date">{{item.date}}</text>
+          <text class="history-note" wx:if="{{item.note}}">{{item.note}}</text>
+        </view>
+        <view class="history-right">
+          <text class="history-weight">{{item.weight}} {{unitLabel}}</text>
+          <text class="history-diff {{item.diffUp ? 'diff-up' : ''}} {{item.diffDown ? 'diff-down' : ''}}">
+            {{item.diffFormatted}}
+          </text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{records.length === 0}}" class="empty-state">
+      <text>暂无记录</text>
+      <text>开始打卡后将显示在这里</text>
+    </view>
+  </block>
 </view>

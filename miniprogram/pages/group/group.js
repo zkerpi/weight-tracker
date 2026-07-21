@@ -8,7 +8,11 @@ Page({
     inviteCodeValid: false,
     myGroup: null,
     members: [],
-    groupLoading: true
+    groupLoading: true,
+    myOpenId: '',
+    isCreator: false,
+    editingName: false,
+    editNameValue: ''
   },
 
   onLoad(query) {
@@ -50,8 +54,9 @@ Page({
       util.hideLoading()
       if (res.result.code === 0) {
         const { group, members } = res.result.data
+        const myOpenId = app.globalData.openId || ''
         app.globalData.groupCache = { groupId: user.groupId, group, members }
-        this.setData({ myGroup: group, members, groupLoading: false })
+        this.setData({ myGroup: group, members, groupLoading: false, myOpenId, isCreator: group.creator === myOpenId })
       }
     } catch (err) {
       util.hideLoading()
@@ -146,6 +151,108 @@ Page({
     } finally {
       util.hideLoading()
     }
+  },
+
+  startEditName() {
+    this.setData({ editingName: true, editNameValue: this.data.myGroup.groupName })
+  },
+
+  onEditNameInput(e) {
+    this.setData({ editNameValue: e.detail.value })
+  },
+
+  async saveGroupName() {
+    const name = this.data.editNameValue.trim()
+    if (!name) {
+      util.showToast('请输入群组名称')
+      return
+    }
+    util.showLoading()
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'updateGroupName',
+        data: { groupId: this.data.myGroup._id, groupName: name }
+      })
+      if (res.result.code === 0) {
+        const group = { ...this.data.myGroup, groupName: name }
+        this.setData({ myGroup: group, editingName: false })
+        getApp().globalData.groupCache = null
+        util.showSuccess('群名已更新')
+      } else {
+        util.showError(res.result.msg || '修改失败')
+      }
+    } catch (err) {
+      util.showError('网络错误')
+    } finally {
+      util.hideLoading()
+    }
+  },
+
+  cancelEditName() {
+    this.setData({ editingName: false })
+  },
+
+  kickMember(e) {
+    const { openid, name } = e.currentTarget.dataset
+    wx.showModal({
+      title: '踢出成员',
+      content: `确定将 ${name || '该成员'} 踢出群组吗？`,
+      success: async (res) => {
+        if (res.confirm) {
+          util.showLoading()
+          try {
+            const res = await wx.cloud.callFunction({
+              name: 'kickMember',
+              data: { groupId: this.data.myGroup._id, targetOpenId: openid }
+            })
+            if (res.result.code === 0) {
+              getApp().globalData.groupCache = null
+              util.showSuccess('已踢出')
+              this.loadMyGroup()
+            } else {
+              util.showError(res.result.msg || '操作失败')
+            }
+          } catch (err) {
+            util.showError('网络错误')
+          } finally {
+            util.hideLoading()
+          }
+        }
+      }
+    })
+  },
+
+  disbandGroup() {
+    wx.showModal({
+      title: '解散群组',
+      content: '确定解散群组？此操作不可撤销，所有成员将被移出。',
+      success: async (res) => {
+        if (res.confirm) {
+          util.showLoading()
+          try {
+            const res = await wx.cloud.callFunction({
+              name: 'disbandGroup',
+              data: { groupId: this.data.myGroup._id }
+            })
+            if (res.result.code === 0) {
+              const app = getApp()
+              const user = app.globalData.userInfo
+              user.groupId = null
+              app.setUserInfo(user)
+              app.globalData.groupCache = null
+              util.showSuccess('已解散')
+              this.setData({ myGroup: null, members: [] })
+            } else {
+              util.showError(res.result.msg || '操作失败')
+            }
+          } catch (err) {
+            util.showError('网络错误')
+          } finally {
+            util.hideLoading()
+          }
+        }
+      }
+    })
   },
 
   copyInviteCode() {

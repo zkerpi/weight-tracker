@@ -115,3 +115,73 @@
   white-space: nowrap;
   max-width: 100rpx;
 }
+
+.creator-badge {
+  font-size: 18rpx;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+}
+
+.kick-btn {
+  font-size: 20rpx;
+  color: var(--danger);
+  padding: 4rpx 10rpx;
+  border: 1rpx solid var(--danger);
+  border-radius: 8rpx;
+}
+
+.kick-btn:active {
+  opacity: 0.6;
+}
+
+.group-detail-value-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.edit-name-icon {
+  font-size: 28rpx;
+  color: var(--primary);
+  padding: 4rpx;
+}
+
+.edit-name-icon:active {
+  opacity: 0.6;
+}
+
+.edit-name-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  align-items: flex-end;
+}
+
+.edit-name-input {
+  text-align: right;
+  font-size: 28rpx;
+  width: 300rpx;
+}
+
+.edit-name-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.edit-name-btn {
+  font-size: 24rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.edit-name-btn.save {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.edit-name-btn.cancel {
+  color: var(--text-muted);
+  background: var(--bg);
+}

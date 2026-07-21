@@ -41,6 +41,34 @@
     </view>
   </view>
 
+  <!-- 周/月统计 -->
+  <view class="card" wx:if="{{weekStats && weekStats.avg}}">
+    <view class="summary-tabs">
+      <view class="summary-tab active">
+        <text class="summary-tab-title">本周</text>
+        <view class="summary-row">
+          <text class="summary-label">平均</text>
+          <text class="summary-value">{{weekStats.avg}} {{unitLabel}}</text>
+        </view>
+        <view class="summary-row">
+          <text class="summary-label">变化</text>
+          <text class="summary-change {{weekStats.isUp ? 'text-danger' : ''}} {{weekStats.isDown ? 'text-primary' : ''}}">{{weekStats.change}} {{unitLabel}}</text>
+        </view>
+      </view>
+      <view class="summary-tab">
+        <text class="summary-tab-title">本月</text>
+        <view class="summary-row">
+          <text class="summary-label">平均</text>
+          <text class="summary-value">{{monthStats.avg}} {{unitLabel}}</text>
+        </view>
+        <view class="summary-row">
+          <text class="summary-label">变化</text>
+          <text class="summary-change {{monthStats.isUp ? 'text-danger' : ''}} {{monthStats.isDown ? 'text-primary' : ''}}">{{monthStats.change}} {{unitLabel}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
   <!-- 趋势图 -->
   <view class="card">
     <view class="card-row">

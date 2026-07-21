@@ -283,6 +283,31 @@ Page({
         const displayToday = todayWeight !== null ? util.displayWeight(todayWeight, weightUnit) : null
         const displayBaseline = util.displayWeight(baselineWeight, weightUnit)
         const displayGoalWeight = user.goalWeight ? util.displayWeight(user.goalWeight, weightUnit) : null
+
+        // 计算周/月统计
+        const now = new Date()
+        const weekAgo = util.formatDate(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000))
+        const monthAgo = util.formatDate(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000))
+        const weekRecords = records.filter(r => r.date >= weekAgo)
+        const monthRecords = records.filter(r => r.date >= monthAgo)
+
+        const calcStats = (recs, unit) => {
+          if (recs.length < 2) return { avg: null, change: null, isUp: false, isDown: false, label: '-' }
+          const weights = recs.map(r => r.weight)
+          const avg = weights.reduce((a, b) => a + b, 0) / weights.length
+          const change = weights[weights.length - 1] - weights[0]
+          const displayAvg = unit === 'jin' ? (avg * 2) : avg
+          const displayChange = unit === 'jin' ? Math.abs(change * 2) : Math.abs(change)
+          return {
+            avg: displayAvg.toFixed(1),
+            change: change === 0 ? '持平' : (change > 0 ? '+' : '') + displayChange.toFixed(1),
+            isUp: change > 0,
+            isDown: change < 0
+          }
+        }
+        const weekStats = calcStats(weekRecords, weightUnit)
+        const monthStats = calcStats(monthRecords, weightUnit)
+
         this.setData({
           weightUnit,
           unitLabel,
@@ -296,7 +321,9 @@ Page({
           progressText,
           progressClass,
           progressPercent,
-          goalType
+          goalType,
+          weekStats,
+          monthStats
         })
 
         this.loadChartData(records, this.data.chartRangeIndex, weightUnit)
