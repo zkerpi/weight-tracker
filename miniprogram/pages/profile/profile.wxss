@@ -1,90 +1,55 @@
-.profile-card {
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-  color: white;
-}
-
-
-.avatar-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  line-height: 0;
-  flex-shrink: 0;
-}
-
-.avatar-btn::after {
-  border: none;
-}
-
-.profile-name-input {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: white;
-  background: transparent;
-  border: none;
-  padding: 4rpx 0;
-  width: 200rpx;
-}
-
-.profile-name-input::placeholder {
-  color: rgba(255,255,255,0.6);
-}
-.avatar-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  line-height: 0;
-  flex-shrink: 0;
-}
-
-.avatar-btn::after {
-  border: none;
-}
-
-.profile-name-input {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: white;
-  background: transparent;
-  border: none;
-  padding: 4rpx 0;
-  width: 200rpx;
-}
-
-.profile-name-input::placeholder {
-  color: rgba(255,255,255,0.6);
-}
-
-.profile-row {
+.profile-header {
   display: flex;
   align-items: center;
   gap: 24rpx;
+  padding: 24rpx 0 0;
+  margin-bottom: 20rpx;
+}
+
+.avatar-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.avatar-btn::after {
+  border: none;
 }
 
 .profile-avatar {
   width: 100rpx;
   height: 100rpx;
   border-radius: 50%;
-  border: 4rpx solid rgba(255,255,255,0.4);
+  border: 4rpx solid var(--border);
 }
 
 .profile-meta {
   display: flex;
   flex: 1;
   flex-direction: column;
+  gap: 4rpx;
 }
 
-.profile-name {
+.profile-name-input {
   font-size: 36rpx;
   font-weight: 700;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  padding: 4rpx 0;
+  width: 240rpx;
 }
 
-.profile-days {
+.profile-name-input::placeholder {
+  color: var(--text-muted);
+}
+
+.profile-subtitle {
   font-size: 26rpx;
-  opacity: 0.8;
-  margin-top: 4rpx;
+  color: var(--text-secondary);
 }
 
 .setting-row {
@@ -160,19 +125,4 @@
 .btn-danger-outline {
   border-color: var(--danger);
   color: var(--danger);
-}
-
-.about-card {
-  margin-top: 20rpx;
-}
-
-.about-card .setting-row {
-  border: none;
-}
-
-.setting-hint {
-  font-size: 24rpx;
-  color: var(--text-muted);
-  text-align: center;
-  padding: 10rpx 0;
 }
