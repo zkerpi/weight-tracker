@@ -14,11 +14,11 @@
 
   <!-- 排行榜列表 -->
   <view wx:if="{{ranking.length > 0}}" class="rank-list">
-    <view class="rank-item card {{item.openId === myOpenId ? 'rank-item-self' : ''}}" wx:for="{{ranking}}" wx:key="openId">
+    <view class="rank-item card {{index === 0 ? 'rank-item-first' : ''}} {{index === 1 ? 'rank-item-second' : ''}} {{index === 2 ? 'rank-item-third' : ''}}" wx:for="{{ranking}}" wx:key="openId">
       <view class="rank-left">
-        <text class="rank-medal" wx:if="{{index === 0}}">🥇</text>
-        <text class="rank-medal" wx:elif="{{index === 1}}">🥈</text>
-        <text class="rank-medal" wx:elif="{{index === 2}}">🥉</text>
+        <text class="rank-medal {{index <= 2 ? 'rank-medal-top' : ''}}" wx:if="{{index === 0}}">👑</text>
+        <text class="rank-medal {{index <= 2 ? 'rank-medal-top' : ''}}" wx:elif="{{index === 1}}">🥈</text>
+        <text class="rank-medal {{index <= 2 ? 'rank-medal-top' : ''}}" wx:elif="{{index === 2}}">🥉</text>
         <text class="rank-number" wx:else>{{index + 1}}</text>
 
         <image class="rank-avatar" src="{{item.avatarUrl || '/images/profile.png'}}" mode="aspectFill"></image>

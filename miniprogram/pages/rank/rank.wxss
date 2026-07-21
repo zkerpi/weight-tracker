@@ -33,6 +33,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 120rpx;
 }
 
 .rank-left {
@@ -47,6 +48,25 @@
   font-size: 36rpx;
   width: 48rpx;
   text-align: center;
+}
+
+.rank-medal-top {
+  font-size: 48rpx;
+  width: 60rpx;
+}
+
+/* 第一名 */
+.rank-item-first {
+  background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%);
+  border: 2rpx solid #f59e0b;
+}
+
+.rank-item-first .rank-name {
+  color: #92400e;
+}
+
+.rank-item-first .rank-value {
+  color: #f59e0b;
 }
 
 .rank-number {
@@ -111,10 +131,24 @@
   margin-top: 2rpx;
 }
 
-/* 自我高亮 */
-.rank-item-self {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-  border: 2rpx solid var(--primary);
+/* 第二名 */
+.rank-item-second {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 2rpx solid #cbd5e1;
+}
+
+.rank-item-second .rank-name {
+  color: #475569;
+}
+
+/* 第三名 */
+.rank-item-third {
+  background: linear-gradient(135deg, #fafaf9 0%, #e7e5e4 100%);
+  border: 2rpx solid #d6d3d1;
+}
+
+.rank-item-third .rank-name {
+  color: #78716c;
 }
 
 /* 骨架屏 */

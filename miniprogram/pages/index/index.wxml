@@ -55,7 +55,6 @@
       goalWeight="{{displayGoalWeight}}"
       unitLabel="{{unitLabel}}"
       goalType="{{goalType}}"
-      rangeStats="{{rangeStats}}"
     ></trend-chart>
     <view class="empty-state" wx:else>
       <text>暂无数据</text>

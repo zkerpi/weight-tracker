@@ -311,8 +311,7 @@ Page({
           changeDisplay: '-',
           totalDays: 0,
           streak: 0,
-          chartData: [],
-          rangeStats: null
+          chartData: []
         })
       }
     } catch (err) {
@@ -341,26 +340,7 @@ Page({
       })
     }
 
-    // 计算所选时间范围内的统计
-    const validRecords = records.filter(r => r.date >= dates[0])
-    if (validRecords.length >= 2) {
-      const weights = validRecords.map(r => r.weight)
-      const avg = weights.reduce((a, b) => a + b, 0) / weights.length
-      const change = weights[weights.length - 1] - weights[0]
-      const displayAvg = weightUnit === 'jin' ? (avg * 2) : avg
-      const absChange = weightUnit === 'jin' ? Math.abs(change * 2) : Math.abs(change)
-      this.setData({
-        chartData,
-        rangeStats: {
-          avg: displayAvg.toFixed(1),
-          change: change === 0 ? '持平' : (change > 0 ? '+' : '') + absChange.toFixed(1),
-          isUp: change > 0,
-          isDown: change < 0
-        }
-      })
-    } else {
-      this.setData({ chartData, rangeStats: null })
-    }
+    this.setData({ chartData })
   },
 
   onChartRangeChange(e) {
