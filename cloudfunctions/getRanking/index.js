@@ -42,12 +42,13 @@ exports.main = async (event, context) => {
     const MAX_BATCH = 50
     let allRecords = []
 
-    // 分批查询所有用户的记录（最多查100条*批次数）
+    // 分批查询所有用户的记录（最多查1000条*批次数）
     for (let i = 0; i < openIds.length; i += MAX_BATCH) {
       const batch = openIds.slice(i, i + MAX_BATCH)
       const res = await db.collection('records')
         .where({ openId: db.command.in(batch) })
         .orderBy('date', 'asc')
+        .limit(1000)
         .get()
       allRecords = allRecords.concat(res.data)
     }

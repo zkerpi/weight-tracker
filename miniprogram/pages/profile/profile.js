@@ -146,8 +146,8 @@ Page({
       this.setData({ avatarTempUrl: uploadRes.fileID })
     } catch (err) {
       console.error('头像上传失败', err)
-      // 即使上传失败也继续保存，至少保存昵称和 setupDone
-      this.setData({ avatarTempUrl: tempUrl })
+      util.showError('头像上传失败')
+      return
     }
     await this.saveProfile()
   },

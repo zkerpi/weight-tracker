@@ -129,8 +129,11 @@ Page({
   onWeightInput(e) {
     const val = e.detail.value
     this.setData({ weight: val })
+    this._updateComparison(val)
+  },
 
-    const parsed = parseFloat(val)
+  _updateComparison(weightStr) {
+    const parsed = parseFloat(weightStr)
     const lwKg = this.data.lastWeight
     if (parsed && lwKg && this.data.isUpdate) {
       const inputKg = util.toKg(parsed, this.data.weightUnit)
@@ -159,7 +162,9 @@ Page({
   },
 
   selectQuickWeight(e) {
-    this.setData({ weight: e.currentTarget.dataset.weight })
+    const val = e.currentTarget.dataset.weight
+    this.setData({ weight: val })
+    this._updateComparison(val)
   },
 
   async submitRecord() {
