@@ -284,30 +284,6 @@ Page({
         const displayBaseline = util.displayWeight(baselineWeight, weightUnit)
         const displayGoalWeight = user.goalWeight ? util.displayWeight(user.goalWeight, weightUnit) : null
 
-        // 计算周/月统计
-        const now = new Date()
-        const weekAgo = util.formatDate(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000))
-        const monthAgo = util.formatDate(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000))
-        const weekRecords = records.filter(r => r.date >= weekAgo)
-        const monthRecords = records.filter(r => r.date >= monthAgo)
-
-        const calcStats = (recs, unit) => {
-          if (recs.length < 2) return { avg: null, change: null, isUp: false, isDown: false, label: '-' }
-          const weights = recs.map(r => r.weight)
-          const avg = weights.reduce((a, b) => a + b, 0) / weights.length
-          const change = weights[weights.length - 1] - weights[0]
-          const displayAvg = unit === 'jin' ? (avg * 2) : avg
-          const displayChange = unit === 'jin' ? Math.abs(change * 2) : Math.abs(change)
-          return {
-            avg: displayAvg.toFixed(1),
-            change: change === 0 ? '持平' : (change > 0 ? '+' : '') + displayChange.toFixed(1),
-            isUp: change > 0,
-            isDown: change < 0
-          }
-        }
-        const weekStats = calcStats(weekRecords, weightUnit)
-        const monthStats = calcStats(monthRecords, weightUnit)
-
         this.setData({
           weightUnit,
           unitLabel,
@@ -321,9 +297,7 @@ Page({
           progressText,
           progressClass,
           progressPercent,
-          goalType,
-          weekStats,
-          monthStats
+          goalType
         })
 
         this.loadChartData(records, this.data.chartRangeIndex, weightUnit)
@@ -337,7 +311,8 @@ Page({
           changeDisplay: '-',
           totalDays: 0,
           streak: 0,
-          chartData: []
+          chartData: [],
+          rangeStats: null
         })
       }
     } catch (err) {
@@ -366,7 +341,26 @@ Page({
       })
     }
 
-    this.setData({ chartData })
+    // 计算所选时间范围内的统计
+    const validRecords = records.filter(r => r.date >= dates[0])
+    if (validRecords.length >= 2) {
+      const weights = validRecords.map(r => r.weight)
+      const avg = weights.reduce((a, b) => a + b, 0) / weights.length
+      const change = weights[weights.length - 1] - weights[0]
+      const displayAvg = weightUnit === 'jin' ? (avg * 2) : avg
+      const absChange = weightUnit === 'jin' ? Math.abs(change * 2) : Math.abs(change)
+      this.setData({
+        chartData,
+        rangeStats: {
+          avg: displayAvg.toFixed(1),
+          change: change === 0 ? '持平' : (change > 0 ? '+' : '') + absChange.toFixed(1),
+          isUp: change > 0,
+          isDown: change < 0
+        }
+      })
+    } else {
+      this.setData({ chartData, rangeStats: null })
+    }
   },
 
   onChartRangeChange(e) {
