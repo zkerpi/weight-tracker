@@ -19,6 +19,10 @@ Component({
     goalType: {
       type: String,
       value: 'lose'
+    },
+    rangeStats: {
+      type: Object,
+      value: null
     }
   },
 
@@ -103,6 +107,28 @@ Component({
 
       // 清屏
       ctx.clearRect(0, 0, w, h)
+
+      // 右上角统计信息
+      const stats = this.properties.rangeStats
+      if (stats && stats.avg) {
+        const boxW = 130
+        const boxH = 40
+        const boxX = padding.left + chartW - boxW - 8
+        const boxY = padding.top + 8
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'
+        ctx.fillRect(boxX, boxY, boxW, boxH)
+        ctx.strokeStyle = '#e2e8f0'
+        ctx.lineWidth = 1
+        ctx.strokeRect(boxX, boxY, boxW, boxH)
+        ctx.fillStyle = '#64748b'
+        ctx.font = '10px sans-serif'
+        ctx.textAlign = 'left'
+        const unit = this.properties.unitLabel
+        ctx.fillText('平均 ' + stats.avg + ' ' + unit, boxX + 10, boxY + 16)
+        const changeColor = stats.isUp ? '#ef4444' : (stats.isDown ? '#10b981' : '#64748b')
+        ctx.fillStyle = changeColor
+        ctx.fillText('变化 ' + stats.change + ' ' + unit, boxX + 10, boxY + 32)
+      }
 
       // 绘制网格线
       ctx.strokeStyle = '#f1f5f9'

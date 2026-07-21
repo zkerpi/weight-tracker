@@ -55,21 +55,11 @@
       goalWeight="{{displayGoalWeight}}"
       unitLabel="{{unitLabel}}"
       goalType="{{goalType}}"
+      rangeStats="{{rangeStats}}"
     ></trend-chart>
     <view class="empty-state" wx:else>
       <text>暂无数据</text>
       <text>开始打卡后将显示趋势图</text>
-    </view>
-    <!-- 范围统计 -->
-    <view wx:if="{{rangeStats}}" class="chart-stats">
-      <view class="chart-stats-col">
-        <text class="chart-stats-label">平均</text>
-        <text class="chart-stats-value">{{rangeStats.avg}} {{unitLabel}}</text>
-      </view>
-      <view class="chart-stats-col">
-        <text class="chart-stats-label">变化</text>
-        <text class="chart-stats-change {{rangeStats.isUp ? 'text-danger' : ''}} {{rangeStats.isDown ? 'text-primary' : ''}}">{{rangeStats.change}} {{unitLabel}}</text>
-      </view>
     </view>
   </view>
 </view>
