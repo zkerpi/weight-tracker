@@ -12,7 +12,6 @@
     <view class="weight-empty" wx:else>
       <text class="weight-empty-text">今天还没打卡</text>
     </view>
-    <text class="motivation-text" wx:if="{{motivationText}}">{{motivationText}}</text>
     <button class="btn-primary" bindtap="goRecord">
       <text wx:if="{{todayWeight}}">修改记录</text>
       <text wx:else>开始打卡</text>

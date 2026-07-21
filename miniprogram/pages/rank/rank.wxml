@@ -2,13 +2,13 @@
   <!-- 排行 Tab 切换 -->
   <view class="rank-tabs">
     <view class="rank-tab {{activeTab === 'loss' ? 'active' : ''}}" bindtap="switchTab" data-tab="loss">
-      <text>减重排行</text>
+      <text>📉 减重排行</text>
     </view>
     <view class="rank-tab {{activeTab === 'percent' ? 'active' : ''}}" bindtap="switchTab" data-tab="percent">
-      <text>完成度</text>
+      <text>🎯 目标进度</text>
     </view>
     <view class="rank-tab {{activeTab === 'streak' ? 'active' : ''}}" bindtap="switchTab" data-tab="streak">
-      <text>连胜🔥</text>
+      <text>🔥 连续打卡</text>
     </view>
   </view>
 

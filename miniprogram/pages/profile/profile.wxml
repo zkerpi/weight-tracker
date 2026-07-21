@@ -43,7 +43,10 @@
     </view>
     <view class="setting-row" wx:if="{{currentWeight}}">
       <text class="setting-label">当前体重</text>
-      <text class="setting-value">{{currentWeight}} {{unitLabel}}</text>
+      <view class="input-group">
+        <text class="setting-input">{{currentWeight}}</text>
+        <text class="setting-unit">{{unitLabel}}</text>
+      </view>
     </view>
     <button class="btn-primary" bindtap="saveGoal">保存目标</button>
   </view>

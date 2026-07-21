@@ -13,7 +13,6 @@ Page({
     streak: 0,
     todayDate: util.getToday(),
     chartData: [],
-    motivationText: '',
     chartRanges: ['近7天', '近14天', '近30天', '近90天', '近1年'],
     chartRangeIndex: 1,
     progressText: '',
@@ -160,23 +159,6 @@ Page({
         const displayBaseline = util.displayWeight(baselineWeight, weightUnit)
         const displayGoalWeight = user.goalWeight ? util.displayWeight(user.goalWeight, weightUnit) : null
 
-        // 生成数据驱动的激励文案
-        let motivationText = ''
-        if (progressPercent >= 100) {
-          motivationText = '🎉 目标已达成！继续保持'
-        } else if (totalChange > 0) {
-          const action = goalType === 'gain' ? '已增' : '已减'
-          motivationText = `相比开始${action} ${displayAbs}${unitLabel}`
-        } else if (records.length > 0) {
-          if (streak >= 7) {
-            motivationText = `已连续打卡 ${streak} 天，坚持就是胜利`
-          } else {
-            motivationText = '波动是正常的，坚持记录就能看到变化'
-          }
-        } else {
-          motivationText = '开始记录你的体重吧'
-        }
-
         this.setData({
           weightUnit,
           unitLabel,
@@ -190,7 +172,6 @@ Page({
           progressText,
           progressClass,
           progressPercent,
-          motivationText,
           goalType
         })
 
@@ -205,8 +186,7 @@ Page({
           changeDisplay: '-',
           totalDays: 0,
           streak: 0,
-          chartData: [],
-          motivationText: '开始记录你的体重吧'
+          chartData: []
         })
       }
     } catch (err) {
