@@ -1,5 +1,5 @@
 {
-  "description": "轻量级好友 - 和朋友一起变轻",
+  "description": "斤斤轻体重记 - 和朋友一起变轻",
   "packOptions": {
     "ignore": [],
     "include": []
@@ -46,7 +46,7 @@
   "compileType": "miniprogram",
   "libVersion": "3.17.0",
   "appid": "wx04b43067d5df1807",
-  "projectname": "轻量级好友",
+  "projectname": "斤斤轻体重记",
   "cloudfunctionRoot": "cloudfunctions/",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "condition": {},

@@ -46,6 +46,8 @@ Page({
       }
 
       const weightUnit = (app.globalData.userInfo && app.globalData.userInfo.weightUnit) || 'kg'
+      const myOpenId = app.globalData.openId || ''
+      this.setData({ myOpenId })
       const activeTab = this.data.activeTab
 
       // 有缓存且不需要刷新 → 直接显示
@@ -71,6 +73,8 @@ Page({
       if (!app.globalData.rankingCache) {
         this.setData({ ranking: [], loading: false })
       }
+    } finally {
+      this.setData({ loading: false })
     }
   },
 
@@ -82,6 +86,8 @@ Page({
     // 走缓存重新排序，不请求云函数
     const app = getApp()
     const cache = app.globalData.rankingCache
+    const myOpenId = app.globalData.openId || ''
+    this.setData({ myOpenId })
     if (cache) {
       const weightUnit = (app.globalData.userInfo && app.globalData.userInfo.weightUnit) || 'kg'
       this._processRanking([...cache.raw], tab, weightUnit)

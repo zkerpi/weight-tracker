@@ -162,6 +162,10 @@
   border-right: none;
 }
 
+.stats-col-clickable {
+  cursor: pointer;
+}
+
 .stats-num {
   font-size: 48rpx;
   font-weight: 800;

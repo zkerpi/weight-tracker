@@ -28,11 +28,15 @@
     <view class="stats-row">
       <view class="stats-col">
         <text class="stats-num {{totalChange >= 0 ? 'text-primary' : 'text-danger'}}">{{changeDisplay || '-'}}{{unitLabel}}</text>
-        <text class="stats-label">已减</text>
+        <text class="stats-label">{{goalType === 'gain' ? '已增' : '已减'}}</text>
       </view>
       <view class="stats-col">
         <text class="stats-num">{{streak || 0}} 天</text>
         <text class="stats-label">连续打卡</text>
+      </view>
+      <view class="stats-col stats-col-clickable" bindtap="goHistory">
+        <text class="stats-num">{{totalDays || 0}} 天</text>
+        <text class="stats-label">共打卡 ›</text>
       </view>
     </view>
   </view>
@@ -50,6 +54,7 @@
       data="{{chartData}}"
       goalWeight="{{displayGoalWeight}}"
       unitLabel="{{unitLabel}}"
+      goalType="{{goalType}}"
     ></trend-chart>
     <view class="empty-state" wx:else>
       <text>暂无数据</text>

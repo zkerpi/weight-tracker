@@ -24,6 +24,11 @@
       </block>
     </view>
 
+    <!-- 备注 -->
+    <view class="note-input-area">
+      <input class="note-input" type="text" placeholder="今天状态怎么样？ (选填)" value="{{note}}" bindinput="onNoteInput" maxlength="30"></input>
+    </view>
+
     <button class="btn-primary" bindtap="submitRecord" disabled="{{!weight || weight <= 0}}">
       {{isUpdate ? '更新记录' : '提交打卡'}}
     </button>

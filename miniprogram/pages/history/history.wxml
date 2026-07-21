@@ -1,0 +1,32 @@
+<view class="page">
+  <!-- 骨架屏 -->
+  <view wx:if="{{loading}}" class="skeleton-list">
+    <view class="skeleton-item" wx:for="{{5}}" wx:key="*this">
+      <view class="skeleton-line skeleton-date"></view>
+      <view class="skeleton-line skeleton-weight"></view>
+      <view class="skeleton-line skeleton-change"></view>
+    </view>
+  </view>
+
+  <!-- 记录列表 -->
+  <view wx:elif="{{records.length > 0}}" class="history-list">
+    <view class="history-item" wx:for="{{records}}" wx:key="_id" data-id="{{item._id}}" data-date="{{item.date}}" bindlongpress="onDeleteRecord">
+      <view class="history-left">
+        <text class="history-date">{{item.date}}</text>
+        <text class="history-note" wx:if="{{item.note}}">{{item.note}}</text>
+      </view>
+      <view class="history-right">
+        <text class="history-weight">{{item.weight}} {{unitLabel}}</text>
+        <text class="history-diff {{item.diffUp ? 'diff-up' : ''}} {{item.diffDown ? 'diff-down' : ''}}">
+          {{item.diffFormatted}}
+        </text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <text>暂无记录</text>
+    <text>开始打卡后将显示在这里</text>
+  </view>
+</view>

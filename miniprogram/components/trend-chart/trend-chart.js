@@ -15,6 +15,10 @@ Component({
     unitLabel: {
       type: String,
       value: 'kg'
+    },
+    goalType: {
+      type: String,
+      value: 'lose'
     }
   },
 
@@ -60,6 +64,7 @@ Component({
 
     renderChart(ctx, data, goalWeight, w, h) {
       const padding = { top: 20, right: 20, bottom: 40, left: 50 }
+      const goalType = this.properties.goalType || 'lose'
       const chartW = w - padding.left - padding.right
       const chartH = h - padding.top - padding.bottom
 
@@ -76,7 +81,7 @@ Component({
           ctx.arc(x, y, 6, 0, Math.PI * 2)
           ctx.fill()
           ctx.fillStyle = '#64748b'
-          ctx.font = '24rpx sans-serif'
+          ctx.font = '12px sans-serif'
           ctx.textAlign = 'center'
           ctx.fillText(validPoints[0].weight + ' ' + this.properties.unitLabel, x, y + 30)
         }
@@ -113,7 +118,7 @@ Component({
         // Y轴标签
         const val = yMax - (yRange / gridLines) * i
         ctx.fillStyle = '#94a3b8'
-        ctx.font = '20rpx sans-serif'
+        ctx.font = '11px sans-serif'
         ctx.textAlign = 'right'
         ctx.fillText(val.toFixed(1), padding.left - 8, y + 7)
       }
@@ -124,7 +129,7 @@ Component({
       const xStep = chartW / (data.length - 1 || 1)
 
       ctx.fillStyle = '#94a3b8'
-      ctx.font = '20rpx sans-serif'
+      ctx.font = '11px sans-serif'
       ctx.textAlign = 'center'
 
       for (let i = 0; i < data.length; i += labelStep) {
@@ -137,6 +142,13 @@ Component({
       // 绘制目标线
       if (goalWeight && goalWeight >= yMin && goalWeight <= yMax) {
         const goalY = padding.top + chartH - ((goalWeight - yMin) / yRange) * chartH
+
+        // 增重模式：目标以上的区域用绿色半透明标出"已达标"
+        if (goalType === 'gain') {
+          ctx.fillStyle = 'rgba(16, 185, 129, 0.08)'
+          ctx.fillRect(padding.left, padding.top, chartW, goalY - padding.top)
+        }
+
         ctx.strokeStyle = '#f59e0b'
         ctx.lineWidth = 2
         ctx.setLineDash([6, 4])
@@ -147,9 +159,10 @@ Component({
         ctx.setLineDash([])
 
         ctx.fillStyle = '#f59e0b'
-        ctx.font = '20rpx sans-serif'
+        ctx.font = '11px sans-serif'
         ctx.textAlign = 'left'
-        ctx.fillText('目标 ' + goalWeight + ' ' + this.properties.unitLabel, padding.left + chartW - 100, goalY - 8)
+        const goalLabel = goalType === 'gain' ? '目标增重' : '目标'
+        ctx.fillText(goalLabel + ' ' + goalWeight + ' ' + this.properties.unitLabel, padding.left + chartW - 100, goalY - 8)
       }
 
       // 绘制折线
@@ -237,14 +250,14 @@ Component({
 
         // 体重标签
         ctx.fillStyle = '#10b981'
-        ctx.font = 'bold 24rpx sans-serif'
+        ctx.font = 'bold 12px sans-serif'
         ctx.textAlign = 'center'
         ctx.fillText(sp.weight + ' ' + this.properties.unitLabel, sp.x, sp.y - 22)
       } else {
         const latest = points[points.length - 1]
         if (latest && latest.y !== null) {
           ctx.fillStyle = '#1e293b'
-          ctx.font = 'bold 22rpx sans-serif'
+          ctx.font = 'bold 11px sans-serif'
           ctx.textAlign = 'center'
           ctx.fillText(latest.weight + ' ' + this.properties.unitLabel, latest.x, latest.y - 16)
         }

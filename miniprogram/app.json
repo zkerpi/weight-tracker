@@ -4,10 +4,11 @@
     "pages/record/record",
     "pages/rank/rank",
     "pages/profile/profile",
-    "pages/group/group"
+    "pages/group/group",
+    "pages/history/history"
   ],
   "window": {
-    "navigationBarTitleText": "轻量级好友",
+    "navigationBarTitleText": "斤斤轻体重记",
     "navigationBarBackgroundColor": "#10b981",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#f8fafc"

@@ -4,7 +4,7 @@ const db = cloud.database()
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
-  const { weight, date } = event
+  const { weight, date, note } = event
 
   if (!OPENID) return { code: -1, msg: '获取用户身份失败' }
   if (!weight || weight <= 0) return { code: -1, msg: '体重数据无效' }
@@ -23,6 +23,7 @@ exports.main = async (event, context) => {
       await db.collection('records').doc(record._id).update({
         data: {
           weight: weight,
+          note: note || '',
           updatedAt: db.serverDate()
         }
       })
@@ -33,6 +34,7 @@ exports.main = async (event, context) => {
         openId: OPENID,
         weight: weight,
         date: date,
+        note: note || '',
         createdAt: db.serverDate(),
         updatedAt: db.serverDate()
       }

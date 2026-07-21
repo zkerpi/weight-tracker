@@ -14,7 +14,7 @@
 
   <!-- 排行榜列表 -->
   <view wx:if="{{ranking.length > 0}}" class="rank-list">
-    <view class="rank-item card" wx:for="{{ranking}}" wx:key="openId">
+    <view class="rank-item card {{item.openId === myOpenId ? 'rank-item-self' : ''}}" wx:for="{{ranking}}" wx:key="openId">
       <view class="rank-left">
         <text class="rank-medal" wx:if="{{index === 0}}">🥇</text>
         <text class="rank-medal" wx:elif="{{index === 1}}">🥈</text>
@@ -45,14 +45,26 @@
     </view>
   </view>
 
+  <!-- 骨架屏 -->
+  <view wx:elif="{{loading}}" class="rank-list">
+    <view class="rank-item card" wx:for="{{5}}" wx:key="*this">
+      <view class="rank-left">
+        <view class="skeleton-circle"></view>
+        <view class="skeleton-avatar"></view>
+        <view class="rank-info">
+          <view class="skeleton-line skeleton-name"></view>
+          <view class="skeleton-line skeleton-curweight"></view>
+        </view>
+      </view>
+      <view class="rank-right">
+        <view class="skeleton-line skeleton-value"></view>
+      </view>
+    </view>
+  </view>
+
   <!-- 空状态 -->
   <view class="empty-state" wx:else>
-    <block wx:if="{{loading}}">
-      <text>加载中...</text>
-    </block>
-    <block wx:else>
-      <text>暂无排行数据</text>
-      <text>加入群组或开始打卡后可见</text>
-    </block>
+    <text>暂无排行数据</text>
+    <text>加入群组或开始打卡后可见</text>
   </view>
 </view>

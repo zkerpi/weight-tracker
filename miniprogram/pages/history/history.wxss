@@ -1,0 +1,103 @@
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.history-item {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24rpx 28rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow);
+}
+
+.history-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.history-date {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.history-note {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  max-width: 300rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4rpx;
+}
+
+.history-weight {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.history-diff {
+  font-size: 22rpx;
+}
+
+.history-diff.diff-up {
+  color: var(--danger);
+}
+
+.history-diff.diff-down {
+  color: var(--primary);
+}
+
+/* 骨架屏 */
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.skeleton-item {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24rpx 28rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow);
+}
+
+.skeleton-line {
+  height: 28rpx;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6rpx;
+}
+
+.skeleton-date {
+  width: 180rpx;
+}
+
+.skeleton-weight {
+  width: 120rpx;
+}
+
+.skeleton-change {
+  width: 80rpx;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

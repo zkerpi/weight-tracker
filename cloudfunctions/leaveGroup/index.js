@@ -17,13 +17,11 @@ exports.main = async (event, context) => {
     const groupId = user.groupId
 
     // 从群组成员中移除
-    const groupRes = await db.collection('groups').doc(groupId).get()
-    if (groupRes.data) {
-      const members = (groupRes.data.members || []).filter(m => m !== OPENID)
-      await db.collection('groups').doc(groupId).update({
-        data: { members }
-      })
-    }
+    await db.collection('groups').doc(groupId).update({
+      data: {
+        members: db.command.pull(OPENID)
+      }
+    })
 
     // 清空用户的 groupId
     await db.collection('users').doc(user._id).update({

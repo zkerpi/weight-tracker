@@ -166,7 +166,7 @@ Page({
       }
     }
     return {
-      title: '来轻量级好友一起打卡减重吧！',
+      title: '来斤斤轻体重记一起打卡减重吧！',
       path: '/pages/group/group'
     }
   },

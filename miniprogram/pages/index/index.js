@@ -137,7 +137,7 @@ Page({
     todayDate: util.getToday(),
     chartData: [],
     dailyQuote: '',
-    chartRanges: ['近7天', '近14天', '近30天'],
+    chartRanges: ['近7天', '近14天', '近30天', '近90天', '近1年'],
     chartRangeIndex: 1,
     progressText: '',
     progressClass: '',
@@ -177,7 +177,7 @@ Page({
       // 首次使用引导：默认昵称提示去设置
       if (!user.setupDone) {
         wx.showModal({
-          title: '欢迎使用 轻量级好友',
+          title: '欢迎使用 斤斤轻体重记',
           content: '请先设置你的昵称和头像，方便朋友识别',
           confirmText: '去设置',
           cancelText: '稍后',
@@ -203,6 +203,7 @@ Page({
         db.collection('records')
           .where({ openId: user.openId })
           .orderBy('date', 'asc')
+          .limit(1000)
           .get(cacheOpt),
         db.collection('records')
           .where({ openId: user.openId, date: util.getToday() })
@@ -260,7 +261,7 @@ Page({
         let progressPercent = 0
         if (user.goalWeight && baselineWeight > 0) {
           const diff = latestWeight - user.goalWeight
-          if (diff <= 0) {
+          if ((goalType === 'lose' && diff <= 0) || (goalType === 'gain' && diff >= 0)) {
             progressText = '🎉 目标达成！'
             progressClass = ''
             progressPercent = 100
@@ -294,7 +295,8 @@ Page({
           streak,
           progressText,
           progressClass,
-          progressPercent
+          progressPercent,
+          goalType
         })
 
         this.loadChartData(records, this.data.chartRangeIndex, weightUnit)
@@ -320,7 +322,7 @@ Page({
   },
 
   loadChartData(records, rangeIndex, weightUnit) {
-    const ranges = [7, 14, 30]
+    const ranges = [7, 14, 30, 90, 365]
     const days = ranges[rangeIndex] || 14
 
     const dates = util.getDateRange(days)
@@ -370,6 +372,10 @@ Page({
     wx.switchTab({ url: '/pages/rank/rank' })
   },
 
+  goHistory() {
+    wx.navigateTo({ url: '/pages/history/history' })
+  },
+
   onShareAppMessage() {
     const streak = this.data.streak || 0
     const totalChange = this.data.totalChange
@@ -383,7 +389,7 @@ Page({
     return {
       title: streak > 0
         ? `我已连续打卡 ${streak} 天${changeText}，一起加油！`
-        : '来轻量级好友一起打卡减重吧！',
+        : '来斤斤轻体重记一起打卡减重吧！',
       path: '/pages/index/index'
     }
   }

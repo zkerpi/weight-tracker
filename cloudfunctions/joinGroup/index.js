@@ -27,13 +27,11 @@ exports.main = async (event, context) => {
     if (user.groupId) return { code: -1, msg: '你已在群组中，请先退出' }
 
     // 添加到群组成员列表
-    const members = group.members || []
-    if (!members.includes(OPENID)) {
-      members.push(OPENID)
-      await db.collection('groups').doc(group._id).update({
-        data: { members }
-      })
-    }
+    await db.collection('groups').doc(group._id).update({
+      data: {
+        members: db.command.push(OPENID)
+      }
+    })
 
     // 更新用户的 groupId
     await db.collection('users').doc(user._id).update({

@@ -110,3 +110,56 @@
 .checkin-badge {
   margin-top: 2rpx;
 }
+
+/* 自我高亮 */
+.rank-item-self {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 2rpx solid var(--primary);
+}
+
+/* 骨架屏 */
+.skeleton-circle {
+  width: 48rpx;
+  height: 36rpx;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6rpx;
+}
+
+.skeleton-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  flex-shrink: 0;
+}
+
+.skeleton-line {
+  height: 24rpx;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6rpx;
+}
+
+.skeleton-name {
+  width: 120rpx;
+  margin-bottom: 8rpx;
+}
+
+.skeleton-curweight {
+  width: 180rpx;
+}
+
+.skeleton-value {
+  width: 100rpx;
+  height: 32rpx;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

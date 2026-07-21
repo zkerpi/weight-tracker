@@ -13,6 +13,7 @@ Page({
     quickWeights: [],
     userInfo: null,
     showCompare: false,
+    note: '',
     showShareBtn: false,
     shareCardPath: '',
     displayedWeight: '',
@@ -95,6 +96,7 @@ Page({
         isUpdate: !!todayRecord,
         existingWeight: todayRecord ? util.displayWeight(todayRecord.weight, weightUnit) : null,
         weight: todayRecord ? util.displayWeight(todayRecord.weight, weightUnit) : '',
+        note: todayRecord ? (todayRecord.note || '') : '',
         lastWeight: lastWeightKg,
         showCompare: false,
         weightUp: false,
@@ -149,6 +151,10 @@ Page({
     this.loadUserStatus()
   },
 
+  onNoteInput(e) {
+    this.setData({ note: e.detail.value })
+  },
+
   selectQuickWeight(e) {
     this.setData({ weight: e.currentTarget.dataset.weight })
   },
@@ -167,7 +173,8 @@ Page({
         name: 'recordWeight',
         data: {
           weight: weightKg,
-          date: this.data.currentDate
+          date: this.data.currentDate,
+          note: this.data.note
         }
       })
 
@@ -242,7 +249,7 @@ Page({
       ctx.fillStyle = 'rgba(255,255,255,0.7)'
       ctx.font = '18px sans-serif'
       ctx.textAlign = 'center'
-      ctx.fillText('轻量级好友', w / 2, 60)
+      ctx.fillText('斤斤轻体重记', w / 2, 60)
 
       // 日期
       ctx.fillStyle = 'rgba(255,255,255,0.5)'
@@ -266,7 +273,7 @@ Page({
       // 底部品牌
       ctx.fillStyle = 'rgba(255,255,255,0.3)'
       ctx.font = '12px sans-serif'
-      ctx.fillText('微信小程序 · 轻量级好友', w / 2, h - 30)
+      ctx.fillText('微信小程序 · 斤斤轻体重记', w / 2, h - 30)
 
       // 导出图片
       let tempFilePath = null

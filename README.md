@@ -1,4 +1,4 @@
-# 轻量级好友 (轻量级好友 - Group Weight Tracking)
+# 斤斤轻体重记 (斤斤轻体重记 - Group Weight Tracking)
 
 微信小程序，用于朋友间每日体重打卡与减重排行。
 
