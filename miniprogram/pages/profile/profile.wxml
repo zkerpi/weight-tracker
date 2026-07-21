@@ -16,7 +16,7 @@
     <view class="setting-row">
       <text class="setting-label">体重单位</text>
       <view class="toggle-group">
-        <view class="toggle-btn {{weightUnit === 'kg' ? 'active' : ''}}" bindtap="setWeightUnit" data-unit="kg">公斤 (kg)</view>
+        <view class="toggle-btn {{weightUnit === 'kg' ? 'active' : ''}}" bindtap="setWeightUnit" data-unit="kg">公斤</view>
         <view class="toggle-btn {{weightUnit === 'jin' ? 'active' : ''}}" bindtap="setWeightUnit" data-unit="jin">斤</view>
       </view>
     </view>
