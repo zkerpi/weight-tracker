@@ -1,9 +1,4 @@
 <view class="page">
-  <!-- 每日寄语 -->
-  <view class="quote-card">
-    <text class="quote-text">"{{dailyQuote}}"</text>
-  </view>
-
   <!-- 今日体重 -->
   <view class="card weight-card">
     <view class="card-row">
@@ -17,6 +12,7 @@
     <view class="weight-empty" wx:else>
       <text class="weight-empty-text">今天还没打卡</text>
     </view>
+    <text class="motivation-text" wx:if="{{motivationText}}">{{motivationText}}</text>
     <button class="btn-primary" bindtap="goRecord">
       <text wx:if="{{todayWeight}}">修改记录</text>
       <text wx:else>开始打卡</text>
