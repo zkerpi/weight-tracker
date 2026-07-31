@@ -1,28 +1,33 @@
 const util = require('../../utils/util')
 
+const PAGE_SIZE = 50
+
 Page({
   data: {
     records: [],
     loading: true,
-    gaps: []
+    gaps: [],
+    hasMore: true,
+    loadingMore: false
   },
 
   onShow() {
-    this.loadRecords()
+    this.loadRecords(true)
   },
 
-  async loadRecords() {
-    util.showLoading()
+  async loadRecords(reset) {
+    if (!reset && (this.data.loadingMore || !this.data.hasMore)) return
+
+    if (reset) {
+      util.showLoading()
+      this.setData({ loading: true, loadingMore: false })
+    } else {
+      this.setData({ loadingMore: true })
+    }
+
     try {
       const app = getApp()
-      let user = app.globalData.userInfo
-      if (!user) {
-        const res = await wx.cloud.callFunction({ name: 'login', data: {} })
-        if (res.result.code === 0) {
-          user = res.result.data
-          app.setUserInfo(user)
-        }
-      }
+      const user = await app.ensureUser(false)
       if (!user) {
         util.showError('获取用户信息失败')
         return
@@ -31,55 +36,78 @@ Page({
       const weightUnit = user.weightUnit || 'kg'
       const unitLabel = util.displayUnit(weightUnit)
       const db = wx.cloud.database()
+
+      // 首次：取最新一批；加载更多：用日期游标取更早的（删除记录不会错位）
+      const where = { openId: user.openId }
+      if (!reset && this.data.records.length > 0) {
+        where.date = db.command.lt(this.data.records[this.data.records.length - 1].date)
+      }
       const res = await db.collection('records')
-        .where({ openId: user.openId })
+        .where(where)
         .orderBy('date', 'desc')
-        .limit(1000)
+        .limit(PAGE_SIZE)
         .get()
 
-      const records = res.data.map((r, i, arr) => {
-        const prev = arr[i + 1]
-        const diff = prev ? r.weight - prev.weight : 0
-        const displayDiff = weightUnit === 'jin' ? (diff * 2) : diff
-        return {
-          _id: r._id,
-          date: r.date,
-          weight: util.displayWeight(r.weight, weightUnit),
-          rawWeight: r.weight,
-          note: r.note || '',
-          diffFormatted: diff === 0 ? '持平' : (displayDiff > 0 ? '+' + displayDiff.toFixed(1) : displayDiff.toFixed(1)),
-          diffUp: diff > 0,
-          diffDown: diff < 0
-        }
-      })
+      // 合并后用全部记录重算相邻差值
+      const rawRecords = reset
+        ? res.data
+        : this.data.records.map(r => ({ _id: r._id, date: r.date, weight: r.rawWeight, note: r.note })).concat(res.data)
+      const records = this._formatRecords(rawRecords, weightUnit)
+      const hasMore = res.data.length === PAGE_SIZE
 
-      // 检测最近7天的补签缺口（最多显示3个）
-      const gaps = []
-      if (records.length > 0) {
-        const today = util.getToday()
-        const oldestDate = records[records.length - 1].date
-        // 从今天往前倒推7天
-        for (let i = 1; i <= 7; i++) {
-          const d = new Date()
-          d.setDate(d.getDate() - i)
-          const dateStr = util.formatDate(d)
-          if (dateStr < oldestDate) break // 不要超出最早记录
-          if (dateStr >= today) continue // 今天不补
-          const exists = records.some(r => r.date === dateStr)
-          if (!exists) {
-            gaps.push(dateStr)
-            if (gaps.length >= 3) break
-          }
-        }
-      }
-
-      this.setData({ records, gaps, loading: false, unitLabel })
+      const patch = { records, hasMore, loadingMore: false, loading: false, unitLabel }
+      if (reset) patch.gaps = this._computeGaps(records)
+      this.setData(patch)
     } catch (err) {
       console.error(err)
-      util.showError('加载失败')
+      this.setData({ loading: false, loadingMore: false })
+      if (reset) util.showError('加载失败')
     } finally {
-      util.hideLoading()
+      if (reset) util.hideLoading()
     }
+  },
+
+  _formatRecords(rawRecords, weightUnit) {
+    return rawRecords.map((r, i, arr) => {
+      const prev = arr[i + 1]
+      const diff = prev ? r.weight - prev.weight : 0
+      const displayDiff = weightUnit === 'jin' ? (diff * 2) : diff
+      return {
+        _id: r._id,
+        date: r.date,
+        weight: util.displayWeight(r.weight, weightUnit),
+        rawWeight: r.weight,
+        note: r.note || '',
+        diffFormatted: diff === 0 ? '持平' : (displayDiff > 0 ? '+' + displayDiff.toFixed(1) : displayDiff.toFixed(1)),
+        diffUp: diff > 0,
+        diffDown: diff < 0
+      }
+    })
+  },
+
+  // 最近7天补签缺口（最多3个），仅首屏计算
+  _computeGaps(records) {
+    const gaps = []
+    if (records.length === 0) return gaps
+    const today = util.getToday()
+    const oldestDate = records[records.length - 1].date
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const dateStr = util.formatDate(d)
+      if (dateStr < oldestDate) break // 不要超出最早记录
+      if (dateStr >= today) continue // 今天不补
+      const exists = records.some(r => r.date === dateStr)
+      if (!exists) {
+        gaps.push(dateStr)
+        if (gaps.length >= 3) break
+      }
+    }
+    return gaps
+  },
+
+  onReachBottom() {
+    this.loadRecords(false)
   },
 
   goBackfill(e) {
@@ -101,7 +129,7 @@ Page({
             })
             getApp().globalData.needsRefresh = true
             util.showSuccess('已删除')
-            this.loadRecords()
+            this.loadRecords(true)
           } catch (err) {
             util.showError('删除失败')
           }

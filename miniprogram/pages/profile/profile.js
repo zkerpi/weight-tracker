@@ -23,26 +23,11 @@ Page({
 
   async loadProfile() {
     const app = getApp()
-    let user = app.globalData.userInfo
     const forceRefresh = app.globalData.needsRefresh
     app.globalData.needsRefresh = false
 
     // 需要最新数据：强制刷新 / 未登录 / 尚无 stats 快照
-    if (forceRefresh || !user || !user.stats) {
-      util.showLoading()
-      try {
-        const res = await wx.cloud.callFunction({ name: 'login', data: {} })
-        if (res.result.code === 0) {
-          user = res.result.data
-          app.setUserInfo(user)
-        }
-      } catch (err) {
-        console.error(err)
-      } finally {
-        util.hideLoading()
-      }
-    }
-
+    const user = await app.ensureUser(forceRefresh, '加载中')
     if (!user) {
       util.showError('加载个人数据失败')
       return
@@ -60,7 +45,7 @@ Page({
     const groupIds = user.groupIds || (user.groupId ? [user.groupId] : [])
     if (groupIds.length > 0) {
       const gKey = groupIds.slice().sort().join(',')
-      const gCache = app.globalData.groupNameCache
+      const gCache = app.cacheGet('groupNames')
       if (gCache && gCache.key === gKey) {
         myGroups = gCache.groups
       } else {
@@ -71,7 +56,7 @@ Page({
             .field({ groupName: true })
             .get()
           myGroups = groupResult.data || []
-          app.globalData.groupNameCache = { key: gKey, groups: myGroups }
+          app.cacheSet('groupNames', { key: gKey, groups: myGroups }, 60000)
         } catch (e) {
           console.error(e)
         }
@@ -87,7 +72,7 @@ Page({
     // 头像 cloud:// 转临时 URL：源未变则用缓存
     let displayAvatar = user.avatarUrl || ''
     if (displayAvatar.startsWith('cloud://')) {
-      const aCache = app.globalData.avatarTempCache
+      const aCache = app.cacheGet('avatar')
       if (aCache && aCache.source === displayAvatar) {
         displayAvatar = aCache.tempUrl
       } else {
@@ -97,7 +82,7 @@ Page({
           })
           if (fileList && fileList[0] && fileList[0].tempFileURL) {
             displayAvatar = fileList[0].tempFileURL
-            app.globalData.avatarTempCache = { source: user.avatarUrl, tempUrl: displayAvatar }
+            app.cacheSet('avatar', { source: user.avatarUrl, tempUrl: displayAvatar }, 60000)
           }
         } catch (_) {}
       }

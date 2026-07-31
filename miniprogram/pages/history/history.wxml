@@ -34,6 +34,9 @@
           </text>
         </view>
       </view>
+
+      <!-- 上拉加载更多 -->
+      <view class="load-more">{{loadingMore ? '加载中...' : (hasMore ? '上拉加载更多' : '— 没有更多了 —')}}</view>
     </view>
 
     <!-- 空状态 -->

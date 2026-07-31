@@ -1,66 +1,7 @@
 const cloud = require('wx-server-sdk')
-cloud.init({ env: "cloud1-d9ghzs2af437701c3" })
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
-
-function getToday() {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-function getYesterday(dateStr) {
-  const d = new Date(dateStr)
-  d.setDate(d.getDate() - 1)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-// 根据 records 重新计算用户统计快照并写入 users.stats
-async function refreshUserStats(openId) {
-  const userRes = await db.collection('users').where({ openId }).get()
-  if (userRes.data.length === 0) return null
-
-  const user = userRes.data[0]
-  const [countRes, firstRes, recentRes] = await Promise.all([
-    db.collection('records').where({ openId }).count(),
-    db.collection('records').where({ openId }).orderBy('date', 'asc').limit(1).get(),
-    db.collection('records').where({ openId }).orderBy('date', 'desc').limit(400).get()
-  ])
-
-  const first = firstRes.data[0] || null
-  const recent = recentRes.data || []
-  const today = getToday()
-
-  // 连续打卡：从今天往前数连续有记录的天数（今天没记录则 0）
-  let streak = 0
-  let checkDate = today
-  for (let i = 0; i < recent.length; i++) {
-    if (recent[i].date === checkDate) {
-      streak++
-      checkDate = getYesterday(checkDate)
-    } else if (recent[i].date < checkDate) {
-      break
-    }
-  }
-
-  const stats = {
-    firstWeight: first ? first.weight : null,
-    firstDate: first ? first.date : null,
-    currentWeight: recent.length > 0 ? recent[0].weight : null,
-    latestDate: recent.length > 0 ? recent[0].date : null,
-    totalDays: countRes.total,
-    streak
-  }
-
-  await db.collection('users').doc(user._id).update({
-    data: { stats }
-  })
-  return stats
-}
+const shared = require('./shared/index')
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
@@ -92,7 +33,7 @@ exports.main = async (event, context) => {
       const res = await db.collection('users').add({ data: newUser })
       user = { ...newUser, _id: res._id }
       // 回填空 stats，保证 login 返回的 user 永远带 stats（空用户也是全 null/0）
-      user.stats = await refreshUserStats(OPENID)
+      user.stats = await shared.refreshUserStats(OPENID)
     } else {
       user = userRes.data[0]
       const updateData = {}
@@ -127,8 +68,24 @@ exports.main = async (event, context) => {
 
       // 回填统计快照（首次登录后所有活跃用户自动补齐）
       if (!user.stats) {
-        user.stats = await refreshUserStats(OPENID)
+        user.stats = await shared.refreshUserStats(OPENID)
       }
+    }
+
+    // 头像临时 URL 缓存：cloud:// 头像未缓存/过期则解析并写回
+    if (user.avatarUrl && user.avatarUrl.startsWith('cloud://')) {
+      try {
+        if (!shared.avatarCacheFresh(user)) {
+          const resolved = await shared.resolveAvatarTempUrl(user.avatarUrl)
+          if (resolved) {
+            await db.collection('users').doc(user._id).update({
+              data: { avatarTempUrl: resolved.tempUrl, avatarTempUrlExpire: resolved.expireAt }
+            })
+            user.avatarTempUrl = resolved.tempUrl
+            user.avatarTempUrlExpire = resolved.expireAt
+          }
+        }
+      } catch (e) {}
     }
 
     return { code: 0, data: user }

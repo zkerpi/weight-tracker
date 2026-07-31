@@ -34,15 +34,7 @@ Page({
     util.showLoading()
     try {
       const app = getApp()
-      let user = app.globalData.userInfo
-
-      if (!user) {
-        const res = await wx.cloud.callFunction({ name: 'login', data: {} })
-        if (res.result.code === 0) {
-          user = res.result.data
-          app.setUserInfo(user)
-        }
-      }
+      const user = await app.ensureUser(false)
 
       if (!user) {
         util.showError('获取用户信息失败')
@@ -189,7 +181,7 @@ Page({
       if (res.result.code === 0) {
         // 标记首页和排名页下次需要刷新数据
         getApp().globalData.needsRefresh = true
-        getApp().globalData.rankingCache = null
+        getApp().cacheClear('ranking')
 
         const displayedWeight = util.displayWeight(weightKg, this.data.weightUnit)
         const msgs = [

@@ -15,15 +15,7 @@ Page({
 
   async loadGroups() {
     const app = getApp()
-    let user = app.globalData.userInfo
-
-    if (!user) {
-      const res = await wx.cloud.callFunction({ name: 'login', data: {} })
-      if (res.result.code === 0) {
-        user = res.result.data
-        app.setUserInfo(user)
-      }
-    }
+    const user = await app.ensureUser(false)
 
     if (!user) {
       this.setData({ groups: [], currentGroupId: '', ranking: [], loading: false })
@@ -91,7 +83,7 @@ Page({
       const activeTab = this.data.activeTab
 
       // 有缓存且不需要刷新 → 直接显示
-      const cache = app.globalData.rankingCache
+      const cache = app.cacheGet('ranking')
       if (cache && cache.groupId === groupId && !app.globalData.needsRefresh) {
         this._processRanking([...cache.raw], activeTab, weightUnit)
       } else {
@@ -105,13 +97,13 @@ Page({
       })
 
       if (res.result.code === 0) {
-        app.globalData.rankingCache = { groupId, raw: res.result.data }
+        app.cacheSet('ranking', { groupId, raw: res.result.data }, 60000)
         this._processRanking(res.result.data, activeTab, weightUnit)
       }
     } catch (err) {
       console.error(err)
       const app = getApp()
-      if (!app.globalData.rankingCache) {
+      if (!app.cacheGet('ranking')) {
         this.setData({ ranking: [], loading: false })
       }
     } finally {
@@ -136,7 +128,7 @@ Page({
 
     // 走缓存重新排序，不请求云函数
     const app = getApp()
-    const cache = app.globalData.rankingCache
+    const cache = app.cacheGet('ranking')
     if (cache) {
       const weightUnit = (app.globalData.userInfo && app.globalData.userInfo.weightUnit) || 'kg'
       this._processRanking([...cache.raw], tab, weightUnit)

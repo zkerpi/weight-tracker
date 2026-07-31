@@ -1,62 +1,14 @@
 const cloud = require('wx-server-sdk')
-cloud.init({ env: "cloud1-d9ghzs2af437701c3" })
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 
-function getToday() {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-function getYesterday(dateStr) {
-  const d = new Date(dateStr)
-  d.setDate(d.getDate() - 1)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
+const shared = require('./shared/index')
 
 // 迁移期兜底：老用户还没有 stats 快照，即时计算并回填（仅首次需要）
 async function ensureUserStats(user) {
   if (user.stats) return user.stats
-
-  const [countRes, firstRes, recentRes] = await Promise.all([
-    db.collection('records').where({ openId: user.openId }).count(),
-    db.collection('records').where({ openId: user.openId }).orderBy('date', 'asc').limit(1).get(),
-    db.collection('records').where({ openId: user.openId }).orderBy('date', 'desc').limit(400).get()
-  ])
-
-  const first = firstRes.data[0] || null
-  const recent = recentRes.data || []
-  const today = getToday()
-
-  // 连续打卡：从今天往前数连续有记录的天数（今天没记录则 0）
-  let streak = 0
-  let checkDate = today
-  for (let i = 0; i < recent.length; i++) {
-    if (recent[i].date === checkDate) {
-      streak++
-      checkDate = getYesterday(checkDate)
-    } else if (recent[i].date < checkDate) {
-      break
-    }
-  }
-
-  const stats = {
-    firstWeight: first ? first.weight : null,
-    firstDate: first ? first.date : null,
-    currentWeight: recent.length > 0 ? recent[0].weight : null,
-    latestDate: recent.length > 0 ? recent[0].date : null,
-    totalDays: countRes.total,
-    streak
-  }
-
-  await db.collection('users').doc(user._id).update({
-    data: { stats }
-  })
+  const stats = await shared.computeStats(user.openId)
+  await db.collection('users').doc(user._id).update({ data: { stats } })
   return stats
 }
 
@@ -81,7 +33,7 @@ exports.main = async (event, context) => {
       return { code: 0, data: [] }
     }
 
-    const today = getToday()
+    const today = shared.getToday()
     const rankingData = []
 
     for (const user of users) {
@@ -124,10 +76,11 @@ exports.main = async (event, context) => {
         }
       }
 
+      const freshAvatar = shared.avatarCacheFresh(user)
       rankingData.push({
         openId: user.openId,
         nickName: user.nickName || '用户',
-        avatarUrl: user.avatarUrl || '',
+        avatarUrl: (freshAvatar ? user.avatarTempUrl : user.avatarUrl) || '',
         goalWeight: user.goalWeight,
         goalType: goalType,
         currentWeight,

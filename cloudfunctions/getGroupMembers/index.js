@@ -1,6 +1,7 @@
 const cloud = require('wx-server-sdk')
-cloud.init({ env: "cloud1-d9ghzs2af437701c3" })
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
+const shared = require('./shared/index')
 
 exports.main = async (event, context) => {
   const { groupId } = event
@@ -21,7 +22,7 @@ exports.main = async (event, context) => {
         const batch = openIds.slice(i, i + MAX_BATCH)
         const userRes = await db.collection('users')
           .where({ openId: db.command.in(batch) })
-          .field({ openId: true, nickName: true, avatarUrl: true })
+          .field({ openId: true, nickName: true, avatarUrl: true, avatarTempUrl: true, avatarTempUrlExpire: true })
           .get()
         members = members.concat(userRes.data)
       }
@@ -30,6 +31,11 @@ exports.main = async (event, context) => {
       members.forEach(m => { memberMap[m.openId] = m })
       members = openIds.map(id => memberMap[id]).filter(Boolean)
     }
+
+    // 头像：新鲜缓存直接替换为临时 URL（其余待批量转换）
+    members.forEach(m => {
+      if (shared.avatarCacheFresh(m)) m.avatarUrl = m.avatarTempUrl
+    })
 
     // 转换 cloud:// 头像
     const cloudFileIds = members

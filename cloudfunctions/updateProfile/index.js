@@ -1,6 +1,7 @@
 const cloud = require('wx-server-sdk')
-cloud.init({ env: "cloud1-d9ghzs2af437701c3" })
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
+const shared = require('./shared/index')
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
@@ -38,6 +39,16 @@ exports.main = async (event, context) => {
     }
     if (event.weightUnit) {
       updateData.weightUnit = event.weightUnit
+    }
+    // 头像变更且为 cloud:// 时同步解析临时 URL 缓存
+    if (event.avatarUrl && event.avatarUrl.startsWith('cloud://') && event.avatarUrl !== user.avatarUrl) {
+      try {
+        const resolved = await shared.resolveAvatarTempUrl(event.avatarUrl)
+        if (resolved) {
+          updateData.avatarTempUrl = resolved.tempUrl
+          updateData.avatarTempUrlExpire = resolved.expireAt
+        }
+      } catch (e) {}
     }
     updateData.setupDone = true
 

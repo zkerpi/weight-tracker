@@ -25,28 +25,14 @@ Page({
 
   async loadData() {
     const app = getApp()
-    let user = app.globalData.userInfo
     const forceRefresh = app.globalData.needsRefresh
     app.globalData.needsRefresh = false
 
     // 需要最新数据：强制刷新（记录页返回）/ 未登录 / 尚无 stats 快照
-    if (forceRefresh || !user || !user.stats) {
-      util.showLoading()
-      try {
-        const loginRes = await wx.cloud.callFunction({ name: 'login', data: {} })
-        if (loginRes.result.code !== 0) {
-          util.showError('获取用户信息失败')
-          return
-        }
-        user = loginRes.result.data
-        app.setUserInfo(user)
-      } catch (err) {
-        console.error('loadData error:', err)
-        util.showError('数据加载失败')
-        return
-      } finally {
-        util.hideLoading()
-      }
+    const user = await app.ensureUser(forceRefresh, '加载中')
+    if (!user) {
+      util.showError('数据加载失败')
+      return
     }
 
     this.setData({
@@ -76,8 +62,8 @@ Page({
     if (totalDays > 0) {
       const weightUnit = user.weightUnit || 'kg'
       const rangeIndex = this.data.chartRangeIndex
-      const cache = app.globalData.homeCache
       const cacheKey = `${user.openId}|${weightUnit}|${rangeIndex}`
+      const cache = app.cacheGet('home')
       const cacheHit = !forceRefresh && cache && cache.key === cacheKey
       if (cacheHit) {
         this.setData({ chartData: cache.chartData })
@@ -205,10 +191,10 @@ Page({
       }))
 
       this.setData({ chartData })
-      getApp().globalData.homeCache = {
+      getApp().cacheSet('home', {
         key: `${user.openId}|${weightUnit}|${rangeIndex}`,
         chartData
-      }
+      }, 120000)
     } catch (err) {
       console.error('loadChart error:', err)
     }

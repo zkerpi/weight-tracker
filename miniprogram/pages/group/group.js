@@ -32,15 +32,7 @@ Page({
 
   async loadMyGroups() {
     const app = getApp()
-    let user = app.globalData.userInfo
-
-    if (!user) {
-      const res = await wx.cloud.callFunction({ name: 'login', data: {} })
-      if (res.result.code === 0) {
-        user = res.result.data
-        app.setUserInfo(user)
-      }
-    }
+    const user = await app.ensureUser(false)
 
     if (!user) {
       this.setData({ groups: [], currentGroupId: '', myGroup: null, members: [], groupLoading: false })
@@ -78,7 +70,7 @@ Page({
     const app = getApp()
 
     // 从缓存读取（瞬间显示）
-    const cache = app.globalData.groupCache
+    const cache = app.cacheGet('group')
     if (cache && cache.groupId === groupId) {
       this.setData({ myGroup: cache.group, members: cache.members, groupLoading: false })
     } else {
@@ -96,7 +88,7 @@ Page({
       if (res.result.code === 0) {
         const { group, members } = res.result.data
         const myOpenId = app.globalData.openId || ''
-        app.globalData.groupCache = { groupId, group, members }
+        app.cacheSet('group', { groupId, group, members }, 60000)
         this.setData({ myGroup: group, members, groupLoading: false, myOpenId, isCreator: group.creator === myOpenId })
       }
     } catch (err) {
@@ -226,7 +218,7 @@ Page({
       if (res.result.code === 0) {
         const group = { ...this.data.myGroup, groupName: name }
         this.setData({ myGroup: group, editingName: false })
-        getApp().globalData.groupCache = null
+        getApp().cacheClear('group')
         util.showSuccess('群名已更新')
       } else {
         util.showError(res.result.msg || '修改失败')
@@ -256,7 +248,7 @@ Page({
               data: { groupId: this.data.myGroup._id, targetOpenId: openid }
             })
             if (res.result.code === 0) {
-              getApp().globalData.groupCache = null
+              getApp().cacheClear('group')
               util.showSuccess('已踢出')
               this.loadGroupDetail(this.data.currentGroupId)
             } else {
@@ -290,7 +282,7 @@ Page({
               const user = app.globalData.userInfo
               user.groupIds = (user.groupIds || []).filter(id => id !== groupId)
               app.setUserInfo(user)
-              app.globalData.groupCache = null
+              app.cacheClear('group')
               util.showSuccess('已解散')
               this.setData({ myGroup: null, members: [] })
               this.loadMyGroups()
@@ -345,7 +337,7 @@ Page({
               const user = app.globalData.userInfo
               user.groupIds = (user.groupIds || []).filter(id => id !== groupId)
               app.setUserInfo(user)
-              app.globalData.groupCache = null
+              app.cacheClear('group')
               util.showSuccess('已退出')
               this.setData({ myGroup: null, members: [] })
               this.loadMyGroups()

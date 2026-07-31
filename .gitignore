@@ -1,0 +1,2 @@
+# 云函数共享模块同步副本（源在 cloudfunctions/_shared/，用 node scripts/sync-shared.js 生成）
+cloudfunctions/*/shared/
