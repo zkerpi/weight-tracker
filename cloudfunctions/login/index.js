@@ -91,6 +91,8 @@ exports.main = async (event, context) => {
       }
       const res = await db.collection('users').add({ data: newUser })
       user = { ...newUser, _id: res._id }
+      // 回填空 stats，保证 login 返回的 user 永远带 stats（空用户也是全 null/0）
+      user.stats = await refreshUserStats(OPENID)
     } else {
       user = userRes.data[0]
       const updateData = {}

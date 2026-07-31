@@ -5,7 +5,10 @@ App({
     groupIds: [],
     currentGroupId: null,
     needsRefresh: false,
-    groupCache: null
+    groupCache: null,
+    homeCache: null,
+    groupNameCache: null,
+    avatarTempCache: null
   },
 
   onLaunch() {
