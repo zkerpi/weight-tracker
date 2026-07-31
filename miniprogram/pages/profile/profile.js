@@ -145,16 +145,21 @@ Page({
       currentWeight: convertValue(this.data.currentWeight)
     })
 
-    // 立即持久化单位并刷新全局数据，让首页/排行榜等页面同步切换
+    // 同步更新全局缓存单位并标记刷新（await 之前），避免切页太快时首页读到旧单位
+    const app = getApp()
+    if (app.globalData.userInfo) {
+      app.globalData.userInfo.weightUnit = newUnit
+    }
+    app.globalData.needsRefresh = true
+
+    // 持久化到云端
     try {
       const res = await wx.cloud.callFunction({
         name: 'updateProfile',
         data: { weightUnit: newUnit }
       })
       if (res.result.code === 0) {
-        const app = getApp()
         app.setUserInfo(res.result.data)
-        app.globalData.needsRefresh = true
       }
     } catch (err) {
       console.error('单位保存失败', err)

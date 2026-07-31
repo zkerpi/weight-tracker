@@ -153,10 +153,18 @@
 }
 
 .stats-num {
-  font-size: 48rpx;
+  font-size: 44rpx;
   font-weight: 800;
   color: var(--text);
   display: block;
+  white-space: nowrap;
+}
+
+.stats-unit {
+  font-size: 24rpx;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-left: 4rpx;
 }
 
 .stats-label {

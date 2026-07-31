@@ -22,7 +22,7 @@
   <view class="card">
     <view class="stats-row">
       <view class="stats-col">
-        <text class="stats-num {{totalChange >= 0 ? 'text-primary' : 'text-danger'}}">{{changeDisplay || '-'}}{{unitLabel}}</text>
+        <text class="stats-num {{totalChange >= 0 ? 'text-primary' : 'text-danger'}}">{{changeDisplay || '-'}}<text class="stats-unit">{{unitLabel}}</text></text>
         <text class="stats-label">{{goalType === 'gain' ? '已增' : '已减'}}</text>
       </view>
       <view class="stats-col">
