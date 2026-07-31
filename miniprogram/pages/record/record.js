@@ -20,7 +20,8 @@ Page({
     shareMsg: '',
     weightUp: false,
     weightDown: false,
-    diffFormatted: ''
+    diffFormatted: '',
+    submitting: false
   },
 
   onLoad(query) {
@@ -46,21 +47,20 @@ Page({
       const weightUnit = user.weightUnit || 'kg'
       const unitLabel = util.displayUnit(weightUnit)
 
-      // 查询已有记录
+      // 查询已有记录：选中日期当天 + 之前最近一条（补签旧日期也能拿到对比）
       const db = wx.cloud.database()
+      const currentDate = this.data.currentDate
       const recordsRes = await db.collection('records')
-        .where({ openId: user.openId })
+        .where({ openId: user.openId, date: db.command.lte(currentDate) })
         .orderBy('date', 'desc')
-        .limit(3)
+        .limit(2)
         .get()
 
       const records = recordsRes.data
-      const currentDate = this.data.currentDate
-
-      // 检查选中日期是否已有记录
-      const todayRecord = records.find(r => r.date === currentDate)
-      // 获取选中日期之前的最后一次体重
-      const lastRecord = records.find(r => r.date < currentDate)
+      // 选中日期当天的记录（若存在）
+      const todayRecord = records[0] && records[0].date === currentDate ? records[0] : null
+      // 选中日期之前最近的一条
+      const lastRecord = todayRecord ? records[1] : records[0]
       const lastWeightKg = lastRecord ? lastRecord.weight : null
 
       // 生成快捷体重选项（显示单位）
@@ -160,12 +160,14 @@ Page({
   },
 
   async submitRecord() {
+    if (this.data.submitting) return
     const weight = parseFloat(this.data.weight)
     if (!weight || weight <= 0 || weight > 300) {
       util.showToast('请输入有效的体重值')
       return
     }
 
+    this.setData({ submitting: true })
     util.showLoading('提交中...')
     try {
       const weightKg = Math.round(util.toKg(weight, this.data.weightUnit) * 100) / 100
@@ -207,6 +209,7 @@ Page({
       console.error(err)
       util.showError('网络错误，请重试')
     } finally {
+      this.setData({ submitting: false })
       util.hideLoading()
     }
   },

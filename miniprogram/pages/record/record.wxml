@@ -29,7 +29,7 @@
       <input class="note-input" type="text" placeholder="备注 (选填)" value="{{note}}" bindinput="onNoteInput" maxlength="30"></input>
     </view>
 
-    <button class="btn-primary" bindtap="submitRecord" disabled="{{!weight || weight <= 0}}">
+    <button class="btn-primary" bindtap="submitRecord" disabled="{{!weight || weight <= 0 || submitting}}">
       {{isUpdate ? '更新记录' : '提交打卡'}}
     </button>
 

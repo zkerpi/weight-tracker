@@ -99,11 +99,13 @@ Page({
 
       const absChange = Math.abs(totalChange)
       const displayAbs = weightUnit === 'jin' ? (absChange * 2).toFixed(1) : absChange.toFixed(1)
+      // 箭头表示真实体重升降方向（与目标类型无关）
+      const diffWeight = Math.round((latestWeight - baselineWeight) * 100) / 100
       let changeDisplay
-      if (totalChange > 0) {
-        changeDisplay = '↓ ' + displayAbs
-      } else if (totalChange < 0) {
+      if (diffWeight > 0) {
         changeDisplay = '↑ ' + displayAbs
+      } else if (diffWeight < 0) {
+        changeDisplay = '↓ ' + displayAbs
       } else {
         changeDisplay = '0'
       }
@@ -231,10 +233,11 @@ Page({
     const totalChange = this.data.totalChange
     const unitLabel = this.data.unitLabel
     let changeText = ''
-    if (totalChange !== 0) {
+    if (totalChange > 0) {
       const abs = Math.abs(totalChange)
       const display = this.data.weightUnit === 'jin' ? (abs * 2).toFixed(1) : abs.toFixed(1)
-      changeText = totalChange > 0 ? `，已减${display}${unitLabel}` : ''
+      const verb = this.data.goalType === 'gain' ? '已增' : '已减'
+      changeText = `，${verb}${display}${unitLabel}`
     }
     return {
       title: streak > 0
