@@ -58,12 +58,11 @@ Page({
     const ranking = raw.map(r => {
       const rawChange = r.totalChange || 0
       const absDisplay = weightUnit === 'jin' ? Math.abs(rawChange * 2).toFixed(1) : Math.abs(rawChange).toFixed(1)
-      return {
-        ...r,
+      return Object.assign({}, r, {
         currentWeight: r.currentWeight ? util.displayWeight(r.currentWeight, weightUnit) : null,
         totalChange: rawChange,
         changeDisplay: absDisplay
-      }
+      })
     }).filter(r => r.totalDays > 0)
 
     this.setData({ ranking, unitLabel, loading: false })
@@ -85,7 +84,7 @@ Page({
       // 有缓存且不需要刷新 → 直接显示
       const cache = app.cacheGet('ranking')
       if (cache && cache.groupId === groupId && !app.globalData.needsRefresh) {
-        this._processRanking([...cache.raw], activeTab, weightUnit)
+        this._processRanking(cache.raw.slice(), activeTab, weightUnit)
       } else {
         this.setData({ loading: true })
       }
@@ -131,7 +130,7 @@ Page({
     const cache = app.cacheGet('ranking')
     if (cache) {
       const weightUnit = (app.globalData.userInfo && app.globalData.userInfo.weightUnit) || 'kg'
-      this._processRanking([...cache.raw], tab, weightUnit)
+      this._processRanking(cache.raw.slice(), tab, weightUnit)
     } else {
       this.loadRanking()
     }

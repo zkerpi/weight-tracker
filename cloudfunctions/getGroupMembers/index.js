@@ -22,7 +22,7 @@ exports.main = async (event, context) => {
         const batch = openIds.slice(i, i + MAX_BATCH)
         const userRes = await db.collection('users')
           .where({ openId: db.command.in(batch) })
-          .field({ openId: true, nickName: true, avatarUrl: true, avatarTempUrl: true, avatarTempUrlExpire: true })
+          .field({ _id: true, openId: true, nickName: true, avatarUrl: true, avatarTempUrl: true, avatarTempUrlExpire: true })
           .get()
         members = members.concat(userRes.data)
       }
@@ -32,26 +32,35 @@ exports.main = async (event, context) => {
       members = openIds.map(id => memberMap[id]).filter(Boolean)
     }
 
-    // 头像：新鲜缓存直接替换为临时 URL（其余待批量转换）
+    // 头像：新鲜缓存直接替换为临时 URL（仅 cloud:// 源，其余待批量转换）
     members.forEach(m => {
-      if (shared.avatarCacheFresh(m)) m.avatarUrl = m.avatarTempUrl
+      if (m.avatarUrl && m.avatarUrl.startsWith('cloud://') && shared.avatarCacheFresh(m)) {
+        m.avatarUrl = m.avatarTempUrl
+      }
     })
 
-    // 转换 cloud:// 头像
+    // 转换 cloud:// 头像（过期缓存不新鲜，会重新走这里换取）
     const cloudFileIds = members
       .filter(m => m.avatarUrl && m.avatarUrl.startsWith('cloud://'))
       .map(m => m.avatarUrl)
-    if (cloudFileIds.length > 0) {
-      try {
-        const res = await cloud.getTempFileURL({ fileList: cloudFileIds })
-        const urlMap = {}
-        res.fileList.forEach(item => {
-          if (item.tempFileURL) urlMap[item.fileID] = item.tempFileURL
-        })
-        members.forEach(m => {
-          if (urlMap[m.avatarUrl]) m.avatarUrl = urlMap[m.avatarUrl]
-        })
-      } catch (e) {}
+    const urlMap = await shared.resolveAvatarTempUrls(cloudFileIds)
+    const avatarWritebacks = []
+    members.forEach(m => {
+      if (m.avatarUrl && m.avatarUrl.startsWith('cloud://')) {
+        const tempUrl = urlMap[m.avatarUrl] || ''
+        m.avatarUrl = tempUrl
+        // 写回新鲜临时链接+真实有效期，让缓存自洽（否则清理后每次拉成员都重复换取）
+        if (tempUrl && m._id) {
+          avatarWritebacks.push({ uid: m._id, tempUrl, expireAt: shared.parseTempUrlExpiry(tempUrl) })
+        }
+      }
+    })
+    if (avatarWritebacks.length > 0) {
+      await Promise.all(avatarWritebacks.map(w =>
+        db.collection('users').doc(w.uid).update({
+          data: { avatarTempUrl: w.tempUrl, avatarTempUrlExpire: w.expireAt }
+        }).catch(() => {})
+      ))
     }
 
     return { code: 0, data: { group, members } }

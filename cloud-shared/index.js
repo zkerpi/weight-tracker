@@ -74,13 +74,35 @@ function avatarCacheFresh(user) {
   return !!(user && user.avatarTempUrl && user.avatarTempUrlExpire && Date.now() < user.avatarTempUrlExpire)
 }
 
+// 微信临时链接的真实有效期内置在 URL 的 t 参数里（秒），按它缓存，避免下发已过期链接返回 403
+function parseTempUrlExpiry(tempUrl) {
+  const m = tempUrl && tempUrl.match(/[?&]t=(\d+)/)
+  return m ? Number(m[1]) * 1000 : Date.now() + AVATAR_TTL
+}
+
 // 解析 cloud:// 头像为临时 URL；非 cloud:// 返回 null
 async function resolveAvatarTempUrl(fileId) {
   if (!fileId || !fileId.startsWith('cloud://')) return null
   const res = await cloud.getTempFileURL({ fileList: [fileId] })
   const item = res.fileList && res.fileList[0]
   if (!item || !item.tempFileURL) return null
-  return { tempUrl: item.tempFileURL, expireAt: Date.now() + AVATAR_TTL }
+  return { tempUrl: item.tempFileURL, expireAt: parseTempUrlExpiry(item.tempFileURL) }
+}
+
+// 批量把 cloud:// 文件 ID 换为临时 URL，返回 { fileId: tempUrl } 映射（每批最多50个）
+async function resolveAvatarTempUrls(fileIds) {
+  const urlMap = {}
+  const MAX_BATCH = 50
+  for (let i = 0; i < fileIds.length; i += MAX_BATCH) {
+    const batch = fileIds.slice(i, i + MAX_BATCH)
+    try {
+      const res = await cloud.getTempFileURL({ fileList: batch })
+      res.fileList.forEach(item => {
+        if (item.tempFileURL) urlMap[item.fileID] = item.tempFileURL
+      })
+    } catch (e) {}
+  }
+  return urlMap
 }
 
 module.exports = {
@@ -89,6 +111,8 @@ module.exports = {
   computeStats,
   refreshUserStats,
   avatarCacheFresh,
+  parseTempUrlExpiry,
   resolveAvatarTempUrl,
+  resolveAvatarTempUrls,
   AVATAR_TTL
 }

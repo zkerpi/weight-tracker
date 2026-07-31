@@ -216,7 +216,7 @@ Page({
         data: { groupId: this.data.myGroup._id, groupName: name }
       })
       if (res.result.code === 0) {
-        const group = { ...this.data.myGroup, groupName: name }
+        const group = Object.assign({}, this.data.myGroup, { groupName: name })
         this.setData({ myGroup: group, editingName: false })
         getApp().cacheClear('group')
         util.showSuccess('群名已更新')

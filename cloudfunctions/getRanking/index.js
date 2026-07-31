@@ -35,6 +35,7 @@ exports.main = async (event, context) => {
 
     const today = shared.getToday()
     const rankingData = []
+    const idByOpenId = {}
 
     for (const user of users) {
       const s = await ensureUserStats(user)
@@ -76,11 +77,12 @@ exports.main = async (event, context) => {
         }
       }
 
-      const freshAvatar = shared.avatarCacheFresh(user)
+      idByOpenId[user.openId] = user._id
+      const avatarIsCloud = !!(user.avatarUrl && user.avatarUrl.startsWith('cloud://'))
       rankingData.push({
         openId: user.openId,
         nickName: user.nickName || '用户',
-        avatarUrl: (freshAvatar ? user.avatarTempUrl : user.avatarUrl) || '',
+        avatarUrl: (avatarIsCloud && shared.avatarCacheFresh(user) ? user.avatarTempUrl : user.avatarUrl) || '',
         goalWeight: user.goalWeight,
         goalType: goalType,
         currentWeight,
@@ -97,21 +99,29 @@ exports.main = async (event, context) => {
     // 按总变化量降序排列
     rankingData.sort((a, b) => b.totalChange - a.totalChange)
 
-    // 在服务端转换 cloud:// 头像为临时可访问 URL
+    // 在服务端转换 cloud:// 头像为临时可访问 URL（过期缓存不新鲜，会重新走这里换取）
     const cloudFileIds = rankingData
       .filter(item => item.avatarUrl && item.avatarUrl.startsWith('cloud://'))
       .map(item => item.avatarUrl)
-    if (cloudFileIds.length > 0) {
-      try {
-        const res = await cloud.getTempFileURL({ fileList: cloudFileIds })
-        const urlMap = {}
-        res.fileList.forEach(item => {
-          if (item.tempFileURL) urlMap[item.fileID] = item.tempFileURL
-        })
-        rankingData.forEach(item => {
-          if (urlMap[item.avatarUrl]) item.avatarUrl = urlMap[item.avatarUrl]
-        })
-      } catch (e) {}
+    const urlMap = await shared.resolveAvatarTempUrls(cloudFileIds)
+    const avatarWritebacks = []
+    rankingData.forEach(item => {
+      if (item.avatarUrl && item.avatarUrl.startsWith('cloud://')) {
+        const tempUrl = urlMap[item.avatarUrl] || ''
+        item.avatarUrl = tempUrl
+        const uid = idByOpenId[item.openId]
+        // 写回新鲜临时链接+真实有效期，让缓存自洽（否则清理后每次拉榜都重复换取）
+        if (tempUrl && uid) {
+          avatarWritebacks.push({ uid, tempUrl, expireAt: shared.parseTempUrlExpiry(tempUrl) })
+        }
+      }
+    })
+    if (avatarWritebacks.length > 0) {
+      await Promise.all(avatarWritebacks.map(w =>
+        db.collection('users').doc(w.uid).update({
+          data: { avatarTempUrl: w.tempUrl, avatarTempUrlExpire: w.expireAt }
+        }).catch(() => {})
+      ))
     }
 
     return { code: 0, data: rankingData }
