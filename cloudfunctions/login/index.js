@@ -103,10 +103,12 @@ exports.main = async (event, context) => {
         updateData.setupDone = true
       }
 
-      // 迁移：老用户的单群 groupId 转成 groupIds 数组，并清理旧字段
+      // 迁移：老用户单群 groupId 转成 groupIds 数组（保留 groupId，旧版本客户端仍读它）
       if (user.groupId && !user.groupIds) {
         updateData.groupIds = [user.groupId]
-        updateData.groupId = null
+      } else if (!user.groupId && user.groupIds && user.groupIds.length > 0) {
+        // 修复：早期迁移曾把 groupId 置空，回填第一个群，避免旧版本客户端读不到群组
+        updateData.groupId = user.groupIds[0]
       }
 
       if (Object.keys(updateData).length > 0) {
