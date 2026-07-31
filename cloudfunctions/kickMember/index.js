@@ -22,12 +22,13 @@ exports.main = async (event, context) => {
       data: { members: db.command.pull(targetOpenId) }
     })
 
-    // 清除被踢用户的 groupId
+    // 将被踢用户从该群移除（兼容老用户清理单值 groupId）
     const userRes = await db.collection('users').where({ openId: targetOpenId }).get()
     if (userRes.data.length > 0) {
-      await db.collection('users').doc(userRes.data[0]._id).update({
-        data: { groupId: null }
-      })
+      const target = userRes.data[0]
+      const updateData = { groupIds: db.command.pull(groupId) }
+      if (target.groupId === groupId) updateData.groupId = null
+      await db.collection('users').doc(target._id).update({ data: updateData })
     }
 
     return { code: 0, msg: '已踢出' }

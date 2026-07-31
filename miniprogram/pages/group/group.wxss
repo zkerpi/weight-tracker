@@ -1,3 +1,33 @@
+.group-switcher {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.group-chip {
+  flex-shrink: 0;
+  padding: 12rpx 28rpx;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  background: var(--card);
+  border-radius: 999rpx;
+  box-shadow: var(--shadow);
+}
+
+.group-chip.active {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+
+.group-chip-add {
+  border: 1rpx dashed var(--text-muted);
+  box-shadow: none;
+}
+
 .form-row {
   margin-bottom: 20rpx;
 }

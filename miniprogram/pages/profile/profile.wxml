@@ -55,15 +55,11 @@
   <view class="card">
     <text class="section-title">群组</text>
     <view class="setting-row">
-      <text class="setting-label">当前群组</text>
-      <text class="setting-value">{{groupName || '未加入'}}</text>
+      <text class="setting-label">我的群组</text>
+      <text class="setting-value">{{groupText}}</text>
     </view>
     <view class="btn-group">
-      <button class="btn-outline" bindtap="goGroup" wx:if="{{!groupId}}">加入/创建群组</button>
-      <block wx:if="{{groupId}}">
-        <button class="btn-outline" bindtap="goGroup">查看群组</button>
-        <button class="btn-outline btn-danger-outline" bindtap="leaveGroup">退出群组</button>
-      </block>
+      <button class="btn-outline" bindtap="goGroup">{{groupCount > 0 ? '管理群组' : '加入/创建群组'}}</button>
     </view>
   </view>
 </view>

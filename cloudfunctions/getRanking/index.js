@@ -19,6 +19,47 @@ function getYesterday(dateStr) {
   return `${y}-${m}-${day}`
 }
 
+// 迁移期兜底：老用户还没有 stats 快照，即时计算并回填（仅首次需要）
+async function ensureUserStats(user) {
+  if (user.stats) return user.stats
+
+  const [countRes, firstRes, recentRes] = await Promise.all([
+    db.collection('records').where({ openId: user.openId }).count(),
+    db.collection('records').where({ openId: user.openId }).orderBy('date', 'asc').limit(1).get(),
+    db.collection('records').where({ openId: user.openId }).orderBy('date', 'desc').limit(400).get()
+  ])
+
+  const first = firstRes.data[0] || null
+  const recent = recentRes.data || []
+  const today = getToday()
+
+  // 连续打卡：从今天往前数连续有记录的天数（今天没记录则 0）
+  let streak = 0
+  let checkDate = today
+  for (let i = 0; i < recent.length; i++) {
+    if (recent[i].date === checkDate) {
+      streak++
+      checkDate = getYesterday(checkDate)
+    } else if (recent[i].date < checkDate) {
+      break
+    }
+  }
+
+  const stats = {
+    firstWeight: first ? first.weight : null,
+    firstDate: first ? first.date : null,
+    currentWeight: recent.length > 0 ? recent[0].weight : null,
+    latestDate: recent.length > 0 ? recent[0].date : null,
+    totalDays: countRes.total,
+    streak
+  }
+
+  await db.collection('users').doc(user._id).update({
+    data: { stats }
+  })
+  return stats
+}
+
 exports.main = async (event, context) => {
   const { groupId } = event
 
@@ -27,69 +68,30 @@ exports.main = async (event, context) => {
   }
 
   try {
-    // 获取群组成员
-    const userQuery = { groupId: groupId }
-    const userRes = await db.collection('users')
-      .where(userQuery)
-      .get()
+    // 兼容迁移期：老用户还是单值 groupId，新用户是 groupIds 数组
+    const userRes = await db.collection('users').where(
+      db.command.or([
+        { groupIds: groupId },
+        { groupId: groupId }
+      ])
+    ).get()
     const users = userRes.data
 
     if (users.length === 0) {
       return { code: 0, data: [] }
     }
 
-    const openIds = users.map(u => u.openId)
-    const MAX_BATCH = 50
-    let allRecords = []
-
-    // 分批查询所有用户的记录（最多查1000条*批次数）
-    for (let i = 0; i < openIds.length; i += MAX_BATCH) {
-      const batch = openIds.slice(i, i + MAX_BATCH)
-      const res = await db.collection('records')
-        .where({ openId: db.command.in(batch) })
-        .orderBy('date', 'asc')
-        .limit(1000)
-        .get()
-      allRecords = allRecords.concat(res.data)
-    }
-
-    // 按 openId 分组
-    const recordsByUser = {}
-    for (const r of allRecords) {
-      if (!recordsByUser[r.openId]) recordsByUser[r.openId] = []
-      recordsByUser[r.openId].push(r)
-    }
-
     const today = getToday()
+    const rankingData = []
 
-    const rankingData = users.map(user => {
-      const records = recordsByUser[user.openId] || []
+    for (const user of users) {
+      const s = await ensureUserStats(user)
 
-      // 基本统计
-      let firstWeight = null
-      let currentWeight = null
-      let totalDays = records.length
-      let streak = 0
-      let checkedInToday = false
-      let latestRecord = null
-
-      if (records.length > 0) {
-        firstWeight = records[0].weight
-        latestRecord = records[records.length - 1]
-        currentWeight = latestRecord.weight
-        checkedInToday = latestRecord.date === today
-
-        // 计算连续打卡（从今天往前数）
-        let checkDate = today
-        for (let i = records.length - 1; i >= 0; i--) {
-          if (records[i].date === checkDate) {
-            streak++
-            checkDate = getYesterday(checkDate)
-          } else if (records[i].date < checkDate) {
-            break
-          }
-        }
-      }
+      const firstWeight = s.firstWeight || null
+      const currentWeight = s.currentWeight || null
+      const totalDays = s.totalDays || 0
+      const streak = s.streak || 0
+      const checkedInToday = s.latestDate === today
 
       // 减重/增重幅度
       const goalType = user.goalType || 'lose'
@@ -122,7 +124,7 @@ exports.main = async (event, context) => {
         }
       }
 
-      return {
+      rankingData.push({
         openId: user.openId,
         nickName: user.nickName || '用户',
         avatarUrl: user.avatarUrl || '',
@@ -135,9 +137,9 @@ exports.main = async (event, context) => {
         streak,
         checkedInToday,
         firstWeight,
-        latestDate: latestRecord ? latestRecord.date : null
-      }
-    })
+        latestDate: s.latestDate || null
+      })
+    }
 
     // 按总变化量降序排列
     rankingData.sort((a, b) => b.totalChange - a.totalChange)

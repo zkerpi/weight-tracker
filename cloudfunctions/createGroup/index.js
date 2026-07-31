@@ -24,7 +24,6 @@ exports.main = async (event, context) => {
     if (userRes.data.length === 0) return { code: -1, msg: '用户不存在' }
 
     const user = userRes.data[0]
-    if (user.groupId) return { code: -1, msg: '你已在群组中，请先退出再加入' }
 
     // 生成不重复的邀请码
     let inviteCode
@@ -48,9 +47,9 @@ exports.main = async (event, context) => {
     }
     const groupRes = await db.collection('groups').add({ data: groupData })
 
-    // 更新用户的 groupId
+    // 更新用户的群组列表
     await db.collection('users').doc(user._id).update({
-      data: { groupId: groupRes._id }
+      data: { groupIds: db.command.push(groupRes._id) }
     })
 
     return {

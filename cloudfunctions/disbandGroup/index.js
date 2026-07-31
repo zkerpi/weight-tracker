@@ -16,14 +16,15 @@ exports.main = async (event, context) => {
     const group = groupRes.data
     if (group.creator !== OPENID) return { code: -1, msg: '只有群主可以解散群组' }
 
-    // 清除所有成员的 groupId（并行处理）
+    // 从所有成员中移除该群（并行处理，兼容老用户清理单值 groupId）
     const members = group.members || []
     await Promise.all(members.map(async (openId) => {
       const userRes = await db.collection('users').where({ openId }).get()
       if (userRes.data.length > 0) {
-        await db.collection('users').doc(userRes.data[0]._id).update({
-          data: { groupId: null }
-        })
+        const member = userRes.data[0]
+        const updateData = { groupIds: db.command.pull(groupId) }
+        if (member.groupId === groupId) updateData.groupId = null
+        await db.collection('users').doc(member._id).update({ data: updateData })
       }
     }))
 

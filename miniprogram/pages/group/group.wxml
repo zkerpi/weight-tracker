@@ -1,25 +1,32 @@
 <view class="page">
-  <!-- 创建群组 -->
-  <view class="card" wx:if="{{!myGroup}}">
-    <text class="section-title">创建群组</text>
-    <view class="form-row">
-      <input class="input-field" placeholder="输入群组名称" value="{{groupName}}" bindinput="onGroupNameInput" maxlength="20"></input>
-    </view>
-    <button class="btn-primary" bindtap="createGroup" disabled="{{!groupNameValid}}">创建群组</button>
+  <!-- 我的群组切换 -->
+  <view class="group-switcher" wx:if="{{groups.length > 0}}">
+    <view class="group-chip {{currentGroupId === item._id ? 'active' : ''}}" wx:for="{{groups}}" wx:key="_id" bindtap="selectGroup" data-id="{{item._id}}">{{item.groupName}}</view>
+    <view class="group-chip group-chip-add" bindtap="toggleJoinForm">{{showJoinForm ? '收起' : '＋'}}</view>
   </view>
 
-  <!-- 加入群组 -->
-  <view class="card" wx:if="{{!myGroup}}">
-    <text class="section-title">加入群组</text>
-    <view class="form-row">
-      <input class="input-field code-input" placeholder="输入4位邀请码" value="{{inviteCode}}" bindinput="onInviteCodeInput" maxlength="4"></input>
+  <!-- 创建/加入群组（无群时直接展示，有群时点开） -->
+  <block wx:if="{{groups.length === 0 || showJoinForm}}">
+    <view class="card">
+      <text class="section-title">创建群组</text>
+      <view class="form-row">
+        <input class="input-field" placeholder="输入群组名称" value="{{groupName}}" bindinput="onGroupNameInput" maxlength="20"></input>
+      </view>
+      <button class="btn-primary" bindtap="createGroup" disabled="{{!groupNameValid}}">创建群组</button>
     </view>
-    <button class="btn-outline" bindtap="joinGroup" disabled="{{!inviteCodeValid}}">加入群组</button>
-  </view>
 
-  <!-- 我的群组 -->
+    <view class="card">
+      <text class="section-title">加入群组</text>
+      <view class="form-row">
+        <input class="input-field code-input" placeholder="输入4位邀请码" value="{{inviteCode}}" bindinput="onInviteCodeInput" maxlength="4"></input>
+      </view>
+      <button class="btn-outline" bindtap="joinGroup" disabled="{{!inviteCodeValid}}">加入群组</button>
+    </view>
+  </block>
+
+  <!-- 选中群详情 -->
   <view class="card" wx:if="{{myGroup}}">
-    <text class="section-title">我的群组</text>
+    <text class="section-title">群组详情</text>
     <view class="my-group-info">
       <view class="group-detail-row">
         <text class="group-detail-label">群组名称</text>

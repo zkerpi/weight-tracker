@@ -6,13 +6,16 @@ Page({
     groupNameValid: false,
     inviteCode: '',
     inviteCodeValid: false,
+    groups: [],
+    currentGroupId: '',
     myGroup: null,
     members: [],
     groupLoading: true,
     myOpenId: '',
     isCreator: false,
     editingName: false,
-    editNameValue: ''
+    editNameValue: '',
+    showJoinForm: false
   },
 
   onLoad(query) {
@@ -24,21 +27,59 @@ Page({
   },
 
   onShow() {
-    this.loadMyGroup()
+    this.loadMyGroups()
   },
 
-  async loadMyGroup() {
+  async loadMyGroups() {
     const app = getApp()
-    const user = app.globalData.userInfo
+    let user = app.globalData.userInfo
 
-    if (!user || !user.groupId) {
-      this.setData({ myGroup: null, members: [], groupLoading: false })
+    if (!user) {
+      const res = await wx.cloud.callFunction({ name: 'login', data: {} })
+      if (res.result.code === 0) {
+        user = res.result.data
+        app.setUserInfo(user)
+      }
+    }
+
+    if (!user) {
+      this.setData({ groups: [], currentGroupId: '', myGroup: null, members: [], groupLoading: false })
       return
     }
 
+    const groupIds = app.globalData.groupIds
+    let groups = []
+    if (groupIds.length > 0) {
+      const db = wx.cloud.database()
+      const res = await db.collection('groups')
+        .where({ _id: db.command.in(groupIds) })
+        .field({ groupName: true })
+        .get()
+      groups = res.data
+    }
+
+    // 确保 currentGroupId 落在现有群组中，否则切到第一个
+    let current = this.data.currentGroupId || app.globalData.currentGroupId
+    const ids = groups.map(g => g._id)
+    if (!ids.includes(current)) {
+      current = ids[0] || ''
+      if (current) app.switchGroup(current)
+    }
+
+    this.setData({ groups, currentGroupId: current })
+    if (current) {
+      this.loadGroupDetail(current)
+    } else {
+      this.setData({ myGroup: null, members: [], groupLoading: false })
+    }
+  },
+
+  async loadGroupDetail(groupId) {
+    const app = getApp()
+
     // 从缓存读取（瞬间显示）
     const cache = app.globalData.groupCache
-    if (cache && cache.groupId === user.groupId) {
+    if (cache && cache.groupId === groupId) {
       this.setData({ myGroup: cache.group, members: cache.members, groupLoading: false })
     } else {
       this.setData({ groupLoading: true })
@@ -49,13 +90,13 @@ Page({
     try {
       const res = await wx.cloud.callFunction({
         name: 'getGroupMembers',
-        data: { groupId: user.groupId }
+        data: { groupId }
       })
       util.hideLoading()
       if (res.result.code === 0) {
         const { group, members } = res.result.data
         const myOpenId = app.globalData.openId || ''
-        app.globalData.groupCache = { groupId: user.groupId, group, members }
+        app.globalData.groupCache = { groupId, group, members }
         this.setData({ myGroup: group, members, groupLoading: false, myOpenId, isCreator: group.creator === myOpenId })
       }
     } catch (err) {
@@ -65,6 +106,19 @@ Page({
         this.setData({ myGroup: null, members: [], groupLoading: false })
       }
     }
+  },
+
+  selectGroup(e) {
+    const groupId = e.currentTarget.dataset.id
+    if (groupId === this.data.currentGroupId) return
+    const app = getApp()
+    app.switchGroup(groupId)
+    this.setData({ currentGroupId: groupId, showJoinForm: false })
+    this.loadGroupDetail(groupId)
+  },
+
+  toggleJoinForm() {
+    this.setData({ showJoinForm: !this.data.showJoinForm })
   },
 
   onGroupNameInput(e) {
@@ -95,15 +149,13 @@ Page({
         const group = res.result.data
         const app = getApp()
         const user = app.globalData.userInfo
-        user.groupId = group._id
+        user.groupIds = (user.groupIds || []).concat([group._id])
         app.setUserInfo(user)
+        app.switchGroup(group._id)
 
         util.showSuccess('群组创建成功！')
-        this.setData({
-          myGroup: group,
-          groupName: ''
-        })
-        this.loadMyGroup()
+        this.setData({ groupName: '', showJoinForm: false, currentGroupId: group._id })
+        this.loadMyGroups()
       } else {
         util.showError(res.result.msg || '创建失败')
       }
@@ -133,15 +185,13 @@ Page({
         const group = res.result.data
         const app = getApp()
         const user = app.globalData.userInfo
-        user.groupId = group._id
+        user.groupIds = (user.groupIds || []).concat([group._id])
         app.setUserInfo(user)
+        app.switchGroup(group._id)
 
         util.showSuccess('加入成功！')
-        this.setData({
-          myGroup: group,
-          inviteCode: ''
-        })
-        this.loadMyGroup()
+        this.setData({ inviteCode: '', showJoinForm: false, currentGroupId: group._id })
+        this.loadMyGroups()
       } else {
         util.showError(res.result.msg || '加入失败')
       }
@@ -208,7 +258,7 @@ Page({
             if (res.result.code === 0) {
               getApp().globalData.groupCache = null
               util.showSuccess('已踢出')
-              this.loadMyGroup()
+              this.loadGroupDetail(this.data.currentGroupId)
             } else {
               util.showError(res.result.msg || '操作失败')
             }
@@ -223,6 +273,7 @@ Page({
   },
 
   disbandGroup() {
+    const groupId = this.data.myGroup._id
     wx.showModal({
       title: '解散群组',
       content: '确定解散群组？此操作不可撤销，所有成员将被移出。',
@@ -232,16 +283,17 @@ Page({
           try {
             const res = await wx.cloud.callFunction({
               name: 'disbandGroup',
-              data: { groupId: this.data.myGroup._id }
+              data: { groupId }
             })
             if (res.result.code === 0) {
               const app = getApp()
               const user = app.globalData.userInfo
-              user.groupId = null
+              user.groupIds = (user.groupIds || []).filter(id => id !== groupId)
               app.setUserInfo(user)
               app.globalData.groupCache = null
               util.showSuccess('已解散')
               this.setData({ myGroup: null, members: [] })
+              this.loadMyGroups()
             } else {
               util.showError(res.result.msg || '操作失败')
             }
@@ -279,6 +331,7 @@ Page({
   },
 
   async leaveGroup() {
+    const groupId = this.data.myGroup._id
     wx.showModal({
       title: '退出群组',
       content: '确定退出当前群组吗？',
@@ -286,14 +339,16 @@ Page({
         if (res.confirm) {
           util.showLoading()
           try {
-            const res = await wx.cloud.callFunction({ name: 'leaveGroup', data: {} })
+            const res = await wx.cloud.callFunction({ name: 'leaveGroup', data: { groupId } })
             if (res.result.code === 0) {
               const app = getApp()
               const user = app.globalData.userInfo
-              user.groupId = null
+              user.groupIds = (user.groupIds || []).filter(id => id !== groupId)
               app.setUserInfo(user)
+              app.globalData.groupCache = null
               util.showSuccess('已退出')
               this.setData({ myGroup: null, members: [] })
+              this.loadMyGroups()
             } else {
               util.showError(res.result.msg || '操作失败')
             }

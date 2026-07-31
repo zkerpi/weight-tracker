@@ -3,7 +3,6 @@ const util = require('../../utils/util')
 Page({
   data: {
     userInfo: null,
-    groupName: '',
     todayWeight: null,
     firstWeight: null,
     displayGoalWeight: null,
@@ -69,12 +68,9 @@ Page({
       app.globalData.needsRefresh = false
       const cacheOpt = forceRefresh ? { cacheTime: 0 } : {}
 
-      // 并行查询：群组名称、所有记录、今日体重
+      // 并行查询：所有记录、今日体重
       const db = wx.cloud.database()
-      const [groupNameResult, recordsRes, todayRes] = await Promise.all([
-        user.groupId
-          ? db.collection('groups').doc(user.groupId).get().catch(() => ({ data: null }))
-          : Promise.resolve({ data: null }),
+      const [recordsRes, todayRes] = await Promise.all([
         db.collection('records')
           .where({ openId: user.openId })
           .orderBy('date', 'asc')
@@ -86,10 +82,8 @@ Page({
           .get(cacheOpt)
       ])
 
-      const groupName = groupNameResult.data ? groupNameResult.data.groupName || '' : ''
       const records = recordsRes.data
       const todayWeight = todayRes.data.length > 0 ? todayRes.data[0].weight : null
-      this.setData({ groupName })
 
       const weightUnit = user.weightUnit || 'kg'
       const unitLabel = util.displayUnit(weightUnit)

@@ -4,10 +4,52 @@ Page({
   data: {
     ranking: [],
     activeTab: 'loss',
-    loading: true
+    loading: true,
+    groups: [],
+    currentGroupId: ''
   },
 
   onShow() {
+    this.loadGroups()
+  },
+
+  async loadGroups() {
+    const app = getApp()
+    let user = app.globalData.userInfo
+
+    if (!user) {
+      const res = await wx.cloud.callFunction({ name: 'login', data: {} })
+      if (res.result.code === 0) {
+        user = res.result.data
+        app.setUserInfo(user)
+      }
+    }
+
+    if (!user) {
+      this.setData({ groups: [], currentGroupId: '', ranking: [], loading: false })
+      return
+    }
+
+    const groupIds = app.globalData.groupIds
+    let groups = []
+    if (groupIds.length > 0) {
+      const db = wx.cloud.database()
+      const res = await db.collection('groups')
+        .where({ _id: db.command.in(groupIds) })
+        .field({ groupName: true })
+        .get()
+      groups = res.data
+    }
+
+    // 确保 currentGroupId 落在现有群组中，否则切到第一个
+    let current = this.data.currentGroupId || app.globalData.currentGroupId
+    const ids = groups.map(g => g._id)
+    if (!ids.includes(current)) {
+      current = ids[0] || ''
+      if (current) app.switchGroup(current)
+    }
+
+    this.setData({ groups, currentGroupId: current })
     this.loadRanking()
   },
 
@@ -38,7 +80,7 @@ Page({
   async loadRanking() {
     try {
       const app = getApp()
-      const groupId = app.globalData.groupId
+      const groupId = app.globalData.currentGroupId
 
       if (!groupId) {
         this.setData({ ranking: [], loading: false })
@@ -68,12 +110,23 @@ Page({
       }
     } catch (err) {
       console.error(err)
+      const app = getApp()
       if (!app.globalData.rankingCache) {
         this.setData({ ranking: [], loading: false })
       }
     } finally {
       this.setData({ loading: false })
     }
+  },
+
+  switchGroup(e) {
+    const groupId = e.currentTarget.dataset.id
+    if (groupId === this.data.currentGroupId) return
+
+    const app = getApp()
+    app.switchGroup(groupId)
+    this.setData({ currentGroupId: groupId })
+    this.loadRanking()
   },
 
   switchTab(e) {

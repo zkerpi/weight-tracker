@@ -19,12 +19,12 @@ exports.main = async (event, context) => {
 
     const group = groupRes.data[0]
 
-    // 检查用户是否已是成员
+    // 检查用户是否已是该群成员
     const userRes = await db.collection('users').where({ openId: OPENID }).get()
     if (userRes.data.length === 0) return { code: -1, msg: '用户不存在' }
 
     const user = userRes.data[0]
-    if (user.groupId) return { code: -1, msg: '你已在群组中，请先退出' }
+    if ((user.groupIds || []).includes(group._id)) return { code: -1, msg: '你已在该群组中' }
 
     // 添加到群组成员列表
     await db.collection('groups').doc(group._id).update({
@@ -33,9 +33,9 @@ exports.main = async (event, context) => {
       }
     })
 
-    // 更新用户的 groupId
+    // 更新用户的群组列表
     await db.collection('users').doc(user._id).update({
-      data: { groupId: group._id }
+      data: { groupIds: db.command.push(group._id) }
     })
 
     return { code: 0, data: group }

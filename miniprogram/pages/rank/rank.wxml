@@ -1,4 +1,9 @@
 <view class="page">
+  <!-- 群组切换 -->
+  <view class="group-switcher" wx:if="{{groups.length > 0}}">
+    <view class="group-chip {{currentGroupId === item._id ? 'active' : ''}}" wx:for="{{groups}}" wx:key="_id" bindtap="switchGroup" data-id="{{item._id}}">{{item.groupName}}</view>
+  </view>
+
   <!-- 排行 Tab 切换 -->
   <view class="rank-tabs">
     <view class="rank-tab {{activeTab === 'loss' ? 'active' : ''}}" bindtap="switchTab" data-tab="loss">

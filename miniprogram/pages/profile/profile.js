@@ -12,8 +12,8 @@ Page({
     initialWeightText: '',
     currentWeight: null,
     totalDays: 0,
-    groupId: null,
-    groupName: '',
+    groupCount: 0,
+    groupText: '',
     userInfo: null
   },
 
@@ -39,12 +39,16 @@ Page({
         return
       }
 
-      // 并行查询：群组名称、打卡统计、最后一条记录
+      // 并行查询：群组列表、打卡统计、最后一条记录
       const db = wx.cloud.database()
+      const groupIds = user.groupIds || (user.groupId ? [user.groupId] : [])
       const [groupResult, countRes, lastRes] = await Promise.all([
-        user.groupId
-          ? db.collection('groups').doc(user.groupId).get().catch(() => ({ data: null }))
-          : Promise.resolve({ data: null }),
+        groupIds.length > 0
+          ? db.collection('groups')
+              .where({ _id: db.command.in(groupIds) })
+              .field({ groupName: true })
+              .get()
+          : Promise.resolve({ data: [] }),
         db.collection('records')
           .where({ openId: user.openId })
           .count(),
@@ -55,7 +59,13 @@ Page({
           .get()
       ])
 
-      const groupName = groupResult.data ? groupResult.data.groupName || '' : ''
+      const myGroups = groupResult.data || []
+      const groupCount = myGroups.length
+      let groupText = '未加入'
+      if (groupCount > 0) {
+        const firstName = myGroups[0].groupName || ''
+        groupText = groupCount === 1 ? firstName : `${firstName} 等 ${groupCount} 个`
+      }
       const totalDays = countRes.total
       const currentWeight = lastRes.data.length > 0 ? lastRes.data[0].weight : null
       const weightUnit = user.weightUnit || 'kg'
@@ -85,8 +95,8 @@ Page({
         initialWeightText: user.initialWeight ? util.displayWeight(user.initialWeight, weightUnit) : '',
         currentWeight: currentWeight !== null ? util.displayWeight(currentWeight, weightUnit) : null,
         totalDays,
-        groupId: user.groupId,
-        groupName,
+        groupCount,
+        groupText,
         userInfo: user
       })
     } catch (err) {
@@ -101,7 +111,7 @@ Page({
     this.setData({ goalType: e.currentTarget.dataset.type })
   },
 
-  setWeightUnit(e) {
+  async setWeightUnit(e) {
     const oldUnit = this.data.weightUnit
     const newUnit = e.currentTarget.dataset.unit
     if (oldUnit === newUnit) return
@@ -118,8 +128,24 @@ Page({
       weightUnit: newUnit,
       unitLabel: util.displayUnit(newUnit),
       goalWeightText: convertValue(this.data.goalWeightText),
-      initialWeightText: convertValue(this.data.initialWeightText)
+      initialWeightText: convertValue(this.data.initialWeightText),
+      currentWeight: convertValue(this.data.currentWeight)
     })
+
+    // 立即持久化单位并刷新全局数据，让首页/排行榜等页面同步切换
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'updateProfile',
+        data: { weightUnit: newUnit }
+      })
+      if (res.result.code === 0) {
+        const app = getApp()
+        app.setUserInfo(res.result.data)
+        app.globalData.needsRefresh = true
+      }
+    } catch (err) {
+      console.error('单位保存失败', err)
+    }
   },
 
   onGoalInput(e) {
@@ -240,35 +266,5 @@ Page({
 
   goGroup() {
     wx.navigateTo({ url: '/pages/group/group' })
-  },
-
-  async leaveGroup() {
-    wx.showModal({
-      title: '提示',
-      content: '确定退出当前群组吗？退出后排行榜将不再显示你的数据。',
-      success: async (res) => {
-        if (res.confirm) {
-          util.showLoading()
-          try {
-            const res = await wx.cloud.callFunction({ name: 'leaveGroup', data: {} })
-            if (res.result.code === 0) {
-              const app = getApp()
-              const user = app.globalData.userInfo
-              user.groupId = null
-              app.setUserInfo(user)
-              util.showSuccess('已退出群组')
-              this.loadProfile()
-            } else {
-              util.showError(res.result.msg || '操作失败')
-            }
-          } catch (err) {
-            console.error(err)
-            util.showError('操作失败')
-         } finally {
-            util.hideLoading()
-          }
-        }
-      }
-    })
   },
 })
