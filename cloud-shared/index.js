@@ -33,15 +33,19 @@ async function computeStats(openId) {
   const recent = recentRes.data || []
   const today = getToday()
 
-  // 连续打卡：从今天往前数连续有记录的天数（今天没记录则 0）
+  // 连续打卡：从最新记录日期往前数；最新记录早于昨天则已断档记 0。
+  // 起点取最新记录而非服务器今天：客户端时区可能领先服务器（凌晨刚打卡），
+  // 此时记录日期比服务器今天晚一天，若从服务器今天数会漏算最新一天。
   let streak = 0
-  let checkDate = today
-  for (let i = 0; i < recent.length; i++) {
-    if (recent[i].date === checkDate) {
-      streak++
-      checkDate = getYesterday(checkDate)
-    } else if (recent[i].date < checkDate) {
-      break
+  if (recent.length > 0 && recent[0].date >= getYesterday(today)) {
+    let checkDate = recent[0].date
+    for (let i = 0; i < recent.length; i++) {
+      if (recent[i].date === checkDate) {
+        streak++
+        checkDate = getYesterday(checkDate)
+      } else if (recent[i].date < checkDate) {
+        break
+      }
     }
   }
 
