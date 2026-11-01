@@ -1,6 +1,6 @@
 const util = require('../../utils/util')
 
-const PAGE_SIZE = 50
+const PAGE_SIZE = 20
 
 Page({
   data: {
@@ -8,11 +8,67 @@ Page({
     loading: true,
     gaps: [],
     hasMore: true,
-    loadingMore: false
+    loadingMore: false,
+    chartData: [],
+    chartRanges: ['14 天', '30 天', '90 天', '1 年'],
+    chartRangeIndex: 0,
+    chartLoading: true,
+    chartError: '',
+    hasChartData: false,
+    goalWeight: null,
+    goalType: 'lose'
   },
 
-  onShow() {
+  async onShow() {
+    const app = getApp()
+    await app.ensureUser(app.globalData.needsRefresh)
+    app.globalData.needsRefresh = false
     this.loadRecords(true)
+    this.loadChart()
+  },
+
+  async loadChart() {
+    const request = this._chartRequest = (this._chartRequest || 0) + 1
+    this.setData({ chartLoading: true, chartError: '' })
+    try {
+      const user = await getApp().ensureUser(false)
+      if (!user) throw new Error('无法获取用户')
+      const dates = util.getDateRange([14, 30, 90, 365][this.data.chartRangeIndex])
+      const db = wx.cloud.database()
+      const records = []
+      let cursor = ''
+      while (true) {
+        const range = cursor ? db.command.gt(cursor).and(db.command.lte(util.getToday())) : db.command.gte(dates[0]).and(db.command.lte(util.getToday()))
+        const res = await db.collection('records').where({ openId: user.openId, date: range }).orderBy('date', 'asc').limit(20).get()
+        records.push(...res.data)
+        if (res.data.length < 20) break
+        cursor = res.data[res.data.length - 1].date
+      }
+      if (request !== this._chartRequest) return
+      const byDate = {}
+      records.forEach(r => { byDate[r.date] = Number(util.displayWeight(r.weight, user.weightUnit)) })
+      const values = records.map(r => r.weight).filter(Number.isFinite)
+      const change = values.length > 1 ? values[values.length - 1] - values[0] : null
+      this.setData({
+        periodCount: values.length,
+        periodAverage: values.length ? util.displayWeight(values.reduce((a, b) => a + b, 0) / values.length, user.weightUnit) : '—',
+        periodChange: change == null ? '—' : (change > 0 ? '+' : change < 0 ? '−' : '') + util.displayWeight(Math.abs(change), user.weightUnit),
+        chartData: dates.map(date => ({ date, weight: byDate[date] == null ? null : byDate[date] })),
+        hasChartData: records.length > 0,
+        unitLabel: util.displayUnit(user.weightUnit),
+        goalWeight: user.goalWeight ? Number(util.displayWeight(user.goalWeight, user.weightUnit)) : null,
+        goalType: user.goalType || 'lose'
+      })
+    } catch (err) {
+      if (request === this._chartRequest) this.setData({ chartError: '趋势加载失败，点击重试', chartData: [], hasChartData: false })
+    } finally {
+      if (request === this._chartRequest) this.setData({ chartLoading: false })
+    }
+  },
+
+  onChartRangeChange(e) {
+    this.setData({ chartRangeIndex: Number(e.currentTarget.dataset.index) })
+    this.loadChart()
   },
 
   async loadRecords(reset) {
@@ -29,8 +85,7 @@ Page({
       const app = getApp()
       const user = await app.ensureUser(false)
       if (!user) {
-        util.showError('获取用户信息失败')
-        return
+        throw new Error('获取用户信息失败')
       }
 
       const weightUnit = user.weightUnit || 'kg'
@@ -56,11 +111,12 @@ Page({
       const hasMore = res.data.length === PAGE_SIZE
 
       const patch = { records, hasMore, loadingMore: false, loading: false, unitLabel }
+      patch.error = ''
       if (reset) patch.gaps = this._computeGaps(records)
       this.setData(patch)
     } catch (err) {
       console.error(err)
-      this.setData({ loading: false, loadingMore: false })
+      this.setData({ loading: false, loadingMore: false, error: '记录加载失败，请重试' })
       if (reset) util.showError('加载失败')
     } finally {
       if (reset) util.hideLoading()
@@ -78,7 +134,7 @@ Page({
         weight: util.displayWeight(r.weight, weightUnit),
         rawWeight: r.weight,
         note: r.note || '',
-        diffFormatted: diff === 0 ? '持平' : (displayDiff > 0 ? '+' + displayDiff.toFixed(1) : displayDiff.toFixed(1)),
+        diffFormatted: !prev ? '起始记录 / 暂无对比' : diff === 0 ? '持平' : (displayDiff > 0 ? '+' + displayDiff.toFixed(1) : displayDiff.toFixed(1)),
         diffUp: diff > 0,
         diffDown: diff < 0
       }
@@ -106,6 +162,8 @@ Page({
     return gaps
   },
 
+  retry() { this.loadRecords(true) },
+  goRecord() { wx.navigateTo({ url: '/pages/record/record' }) },
   onReachBottom() {
     this.loadRecords(false)
   },
@@ -123,13 +181,17 @@ Page({
       success: async (res) => {
         if (res.confirm) {
           try {
-            await wx.cloud.callFunction({
+            const result = await wx.cloud.callFunction({
               name: 'deleteRecord',
               data: { recordId: id }
             })
+            if (!result.result || result.result.code !== 0) throw new Error('删除失败')
+            getApp().clearPageCaches()
             getApp().globalData.needsRefresh = true
             util.showSuccess('已删除')
+            await getApp().ensureUser(true)
             this.loadRecords(true)
+            this.loadChart()
           } catch (err) {
             util.showError('删除失败')
           }

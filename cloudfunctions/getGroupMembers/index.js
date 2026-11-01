@@ -22,7 +22,12 @@ exports.main = async (event, context) => {
         const batch = openIds.slice(i, i + MAX_BATCH)
         const userRes = await db.collection('users')
           .where({ openId: db.command.in(batch) })
-          .field({ _id: true, openId: true, nickName: true, avatarUrl: true, avatarTempUrl: true, avatarTempUrlExpire: true })
+          .field({
+            _id: true, openId: true, nickName: true, avatarUrl: true,
+            avatarTempUrl: true, avatarTempUrlExpire: true,
+            // 小组动态要显示体重与涨跌，取统计快照即可，避免每个成员再查记录
+            stats: true, weightUnit: true
+          })
           .get()
         members = members.concat(userRes.data)
       }

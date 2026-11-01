@@ -1,0 +1,37 @@
+/* 我的小组 —— 「我」页里「所属小组」的落点：先看清自己在哪几处，再决定进哪一个 */
+
+.groups-page { padding:12rpx 40rpx calc(60rpx + env(safe-area-inset-bottom)); }
+
+.groups-list { display:flex; margin-top:26rpx; flex-direction:column; }
+.group-card {
+  margin-bottom:16rpx; padding:26rpx 28rpx;
+  border:1rpx solid var(--line); border-radius:26rpx; background:var(--surface);
+  transition:border-color .2s ease, background .2s ease;
+}
+.group-card.is-current { border-color:var(--primary); background:#eef2ea; }
+.group-card-head { display:flex; align-items:center; justify-content:space-between; }
+.group-card-name {
+  flex:1; min-width:0; overflow:hidden; color:var(--text);
+  font-family:"Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "STSong", Georgia, serif;
+  font-size:36rpx; line-height:1.25; text-overflow:ellipsis; white-space:nowrap;
+}
+.group-card-flag {
+  flex-shrink:0; margin-left:16rpx; padding:4rpx 14rpx; border-radius:999rpx;
+  background:var(--primary); color:#fff; font-size:18rpx; line-height:1.5;
+}
+.group-card-meta { display:flex; margin-top:12rpx; align-items:baseline; }
+.group-card-members { font-size:28rpx; }
+.group-card-role { margin-left:16rpx; color:var(--muted); font-size:21rpx; }
+.group-card-foot {
+  display:flex; margin-top:18rpx; padding-top:16rpx; align-items:center; justify-content:space-between;
+  border-top:1rpx solid #f0ece0;
+}
+.group-card-code { color:var(--muted); font-size:20rpx; letter-spacing:1rpx; }
+.group-card-enter { color:var(--primary); font-size:22rpx; }
+
+.groups-empty { min-height:340rpx; }
+.groups-empty-title { color:var(--text); font-size:26rpx; }
+.groups-empty-note { color:var(--muted); font-size:21rpx; }
+
+.groups-add { margin-top:10rpx; }
+.groups-note { display:block; margin-top:22rpx; color:var(--faint); font-size:20rpx; line-height:1.75; }

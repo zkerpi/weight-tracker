@@ -1,37 +1,83 @@
-<view class="page">
-  <!-- 我的群组切换 -->
-  <view class="group-switcher" wx:if="{{groups.length > 0}}">
+<view class="page group-page">
+  <view class="page-head group-head">
+    <view class="page-head-copy">
+      <text class="display-title">小组</text>
+      <text class="page-tagline">和更好的伙伴，一起稳稳变轻</text>
+    </view>
+    <button class="group-invite" open-type="share">
+      <image class="group-invite-icon" src="/images/ui-invite.png"></image>
+    </button>
+  </view>
+
+  <view class="mode-tabs">
+    <view class="mode-tab active">动态</view>
+    <view class="mode-tab" bindtap="goRanking">排行</view>
+  </view>
+
+  <view class="notice" wx:if="{{!myGroup}}">加入后，小组成员可以看到你的昵称、体重和目标进度。</view>
+
+  <!-- 我的群组切换：只有一个小组时不出现，避免干扰列表 -->
+  <view class="group-switcher" wx:if="{{groups.length > 1}}">
     <view class="group-chip {{currentGroupId === item._id ? 'active' : ''}}" wx:for="{{groups}}" wx:key="_id" bindtap="selectGroup" data-id="{{item._id}}">{{item.groupName}}</view>
     <view class="group-chip group-chip-add" bindtap="toggleJoinForm">{{showJoinForm ? '收起' : '＋'}}</view>
   </view>
 
-  <!-- 创建/加入群组（无群时直接展示，有群时点开） -->
+  <!-- 动态列表 -->
+  <view wx:if="{{groupLoading && members.length === 0}}" class="feed">
+    <view class="feed-empty">正在加载小组动态…</view>
+  </view>
+  <view wx:if="{{myGroup && members.length > 0}}" class="feed">
+    <view class="feed-head">
+      <text class="feed-head-title">今天的记录</text>
+      <text class="feed-head-link" bindtap="toggleManagement">{{showManagement ? '收起' : '小组设置'}}</text>
+    </view>
+    <view class="feed-row" wx:for="{{members}}" wx:key="openId">
+      <image class="feed-avatar" src="{{item.avatarUrl || '/images/cat-avatar.jpg'}}" mode="aspectFill"></image>
+      <view class="feed-copy">
+        <view class="feed-name-line">
+          <text class="feed-name">{{item.nickName || '用户'}}</text>
+          <text class="feed-time" wx:if="{{item.timeText}}">{{item.timeText}}</text>
+        </view>
+        <text class="feed-note">{{item.statusText}}</text>
+      </view>
+      <view class="feed-value" wx:if="{{item.weightText}}">
+        <view class="feed-weight fig-row">
+          <text class="feed-num fig-num">{{item.weightText}}</text>
+          <text class="feed-unit fig-unit">{{item.unitText}}</text>
+        </view>
+        <text class="feed-delta {{item.deltaDir}}" wx:if="{{item.deltaText}}">{{item.deltaText}}</text>
+      </view>
+      <view class="feed-value feed-value-empty" wx:else><text class="feed-empty-num">—</text></view>
+    </view>
+  </view>
+
+  <!-- 创建/加入群组 -->
   <block wx:if="{{groups.length === 0 || showJoinForm}}">
     <view class="card">
-      <text class="section-title">创建群组</text>
+      <text class="section-title">创建小组</text>
       <view class="form-row">
-        <input class="input-field" placeholder="输入群组名称" value="{{groupName}}" bindinput="onGroupNameInput" maxlength="20"></input>
+        <input class="input-field" placeholder="输入小组名称" value="{{groupName}}" bindinput="onGroupNameInput" maxlength="20"></input>
       </view>
-      <button class="btn-primary" bindtap="createGroup" disabled="{{!groupNameValid}}">创建群组</button>
+      <button class="btn-primary" bindtap="createGroup" disabled="{{!groupNameValid}}">创建小组</button>
     </view>
 
     <view class="card">
-      <text class="section-title">加入群组</text>
+      <text class="section-title">加入小组</text>
       <view class="form-row">
         <input class="input-field code-input" placeholder="输入4位邀请码" value="{{inviteCode}}" bindinput="onInviteCodeInput" maxlength="4"></input>
       </view>
-      <button class="btn-outline" bindtap="joinGroup" disabled="{{!inviteCodeValid}}">加入群组</button>
+      <button class="btn-outline" bindtap="joinGroup" disabled="{{!inviteCodeValid}}">加入小组</button>
     </view>
   </block>
 
-  <!-- 选中群详情 -->
-  <view class="card" wx:if="{{myGroup}}">
-    <text class="section-title">群组详情</text>
+  <!-- 小组设置 -->
+  <view class="card management-card" wx:if="{{myGroup && showManagement}}">
+    <text class="section-title">小组设置</text>
     <view class="my-group-info">
       <view class="group-detail-row">
-        <text class="group-detail-label">群组名称</text>
+        <text class="group-detail-label">小组名称</text>
         <view wx:if="{{editingName}}" class="edit-name-row">
-          <input class="input-field edit-name-input" placeholder="输入群组名称" value="{{editNameValue}}" bindinput="onEditNameInput" maxlength="20"></input>
+          <input class="input-field edit-name-input" placeholder="输入小组名称" value="{{editNameValue}}" bindinput="onEditNameInput" maxlength="20"></input>
           <view class="edit-name-actions">
             <text class="edit-name-btn save" bindtap="saveGroupName">保存</text>
             <text class="edit-name-btn cancel" bindtap="cancelEditName">取消</text>
@@ -49,29 +95,30 @@
           <text class="copy-hint">点击复制</text>
         </view>
       </view>
-      <view class="group-detail-row">
+      <view class="group-detail-row group-detail-last">
         <text class="group-detail-label">成员数</text>
         <text class="group-detail-value">{{myGroup.members ? myGroup.members.length : 0}} 人</text>
       </view>
     </view>
 
-    <!-- 成员列表 -->
     <view wx:if="{{members.length > 0}}" class="member-section">
-      <text class="member-section-title">群组成员</text>
+      <text class="member-section-title">成员管理</text>
       <view class="member-list">
         <view class="member-item" wx:for="{{members}}" wx:key="openId">
-          <image class="member-avatar" src="{{item.avatarUrl || '/images/profile.png'}}" mode="aspectFill"></image>
-          <text class="member-name">{{item.nickName || '用户'}}</text>
+          <image class="member-avatar" src="{{item.avatarUrl || '/images/cat-avatar.jpg'}}" mode="aspectFill"></image>
+          <view class="member-copy"><text class="member-name">{{item.nickName || '用户'}}</text><text class="member-status">记录了体重</text></view>
           <text wx:if="{{item.openId === myGroup.creator}}" class="creator-badge">群主</text>
-          <text wx:if="{{isCreator && item.openId !== myOpenId}}" class="kick-btn" bindtap="kickMember" data-openid="{{item.openId}}" data-name="{{item.nickName}}">踢出</text>
+          <text wx:if="{{isCreator && item.openId !== myOpenId}}" class="kick-btn" bindtap="kickMember" data-openid="{{item.openId}}" data-name="{{item.nickName}}">移出</text>
         </view>
       </view>
     </view>
 
     <view class="btn-group">
       <button class="btn-primary" open-type="share">邀请好友</button>
-      <button wx:if="{{isCreator}}" class="btn-outline btn-danger-outline" bindtap="disbandGroup">解散群组</button>
-      <button wx:else class="btn-outline btn-danger-outline" bindtap="leaveGroup">退出群组</button>
+      <button class="btn-outline" bindtap="goRanking">查看小组排行</button>
+      <button class="btn-outline" bindtap="toggleJoinForm">{{showJoinForm ? '收起' : '创建或加入其他小组'}}</button>
+      <button wx:if="{{isCreator}}" class="btn-outline btn-danger-outline" bindtap="disbandGroup">解散小组</button>
+      <button wx:else class="btn-outline btn-danger-outline" bindtap="leaveGroup">退出小组</button>
     </view>
   </view>
 </view>

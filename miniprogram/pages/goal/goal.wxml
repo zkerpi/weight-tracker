@@ -1,0 +1,67 @@
+<view class="page goal-page">
+  <view class="page-head">
+    <view class="page-head-copy">
+      <text class="display-title long">目标体重</text>
+      <text class="page-tagline">给一个方向，不给压力</text>
+    </view>
+  </view>
+
+  <!-- 已有目标：进度优先 -->
+  <view class="goal-progress" wx:if="{{progress}}">
+    <view class="goal-progress-top">
+      <view class="goal-progress-side">
+        <text class="goal-progress-label">起点</text>
+        <text class="goal-progress-num fig-num">{{progress.start}}</text>
+      </view>
+      <view class="goal-progress-center">
+        <text class="goal-progress-percent fig-num">{{progress.percent}}<text class="goal-progress-pct">%</text></text>
+        <text class="goal-progress-hint">已完成</text>
+      </view>
+      <view class="goal-progress-side right">
+        <text class="goal-progress-label">目标</text>
+        <text class="goal-progress-num fig-num">{{progress.target}}</text>
+      </view>
+    </view>
+    <view class="goal-track">
+      <view class="goal-track-fill" style="width:{{progress.percent}}%"></view>
+    </view>
+    <view class="goal-progress-foot">
+      <text class="goal-progress-current">现在 <text class="fig-inline">{{progress.current}}</text> {{unitLabel}}</text>
+      <text class="goal-progress-caption">{{progress.caption}}</text>
+    </view>
+  </view>
+
+  <!-- 尚未设定：起点与现状 -->
+  <view class="goal-baseline" wx:else>
+    <view class="goal-baseline-item fig-row">
+      <text class="goal-baseline-label">起点</text>
+      <text class="goal-baseline-num fig-num">{{startText || '—'}}</text>
+      <text class="goal-baseline-unit fig-unit">{{unitLabel}}</text>
+    </view>
+    <view class="goal-baseline-split"></view>
+    <view class="goal-baseline-item fig-row">
+      <text class="goal-baseline-label">现在</text>
+      <text class="goal-baseline-num fig-num">{{currentText || '—'}}</text>
+      <text class="goal-baseline-unit fig-unit">{{unitLabel}}</text>
+    </view>
+  </view>
+
+  <view class="goal-card">
+    <text class="goal-field-label">方向</text>
+    <view class="goal-segmented">
+      <view class="goal-segment {{goalType === 'lose' ? 'active' : ''}}" bindtap="setGoalType" data-type="lose">想轻一点</view>
+      <view class="goal-segment {{goalType === 'gain' ? 'active' : ''}}" bindtap="setGoalType" data-type="gain">想重一点</view>
+    </view>
+
+    <text class="goal-field-label">目标体重</text>
+    <view class="goal-input-row fig-row">
+      <input class="goal-input fig-num" style="width:{{inputW}}rpx" type="digit" value="{{goalText}}" bindinput="onGoalInput" placeholder="0.0" placeholder-class="goal-input-holder" />
+      <text class="goal-input-unit fig-unit">{{unitLabel}}</text>
+    </view>
+    <text class="goal-diff">{{diffText}}</text>
+
+    <button class="btn-primary goal-save" bindtap="save" loading="{{saving}}" disabled="{{saving}}">{{hasGoal ? '更新目标' : '保存目标'}}</button>
+  </view>
+
+  <text class="goal-note">目标只影响进度怎么算，不会改写任何历史记录。想换显示单位，可以在「我 · 体重单位」里调整。</text>
+</view>

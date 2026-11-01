@@ -1,75 +1,130 @@
-<view class="page">
-  <!-- 群组切换 -->
-  <view class="group-switcher" wx:if="{{groups.length > 0}}">
+<view class="page rank-page">
+  <view class="page-head rank-head">
+    <view class="page-head-copy">
+      <text class="display-title">排行</text>
+      <text class="page-tagline rank-tagline">{{groupName || '和伙伴一起，稳稳变轻'}}</text>
+    </view>
+    <button class="rank-invite" open-type="share">
+      <image class="rank-invite-icon" src="/images/ui-invite.png"></image>
+    </button>
+  </view>
+
+  <!-- 多群组切换：只有一个小组时不出现 -->
+  <scroll-view class="group-scroll" scroll-x enable-flex wx:if="{{groups.length > 1}}">
     <view class="group-chip {{currentGroupId === item._id ? 'active' : ''}}" wx:for="{{groups}}" wx:key="_id" bindtap="switchGroup" data-id="{{item._id}}">{{item.groupName}}</view>
+  </scroll-view>
+
+  <!-- 指标切换 -->
+  <view class="metric-tabs" wx:if="{{groups.length > 0}}">
+    <view class="metric-tab {{metric === item.key ? 'active' : ''}}" wx:for="{{metrics}}" wx:key="key" bindtap="switchMetric" data-key="{{item.key}}">{{item.label}}</view>
   </view>
 
-  <!-- 排行 Tab 切换 -->
-  <view class="rank-tabs">
-    <view class="rank-tab {{activeTab === 'loss' ? 'active' : ''}}" bindtap="switchTab" data-tab="loss">
-      <text>📉 减重排行</text>
-    </view>
-    <view class="rank-tab {{activeTab === 'percent' ? 'active' : ''}}" bindtap="switchTab" data-tab="percent">
-      <text>🎯 目标进度</text>
-    </view>
-    <view class="rank-tab {{activeTab === 'streak' ? 'active' : ''}}" bindtap="switchTab" data-tab="streak">
-      <text>🔥 连续打卡</text>
+  <view wx:if="{{error}}" class="notice" bindtap="retry">{{error}}</view>
+
+  <!-- 骨架 -->
+  <view wx:if="{{loading && totalCount === 0}}" class="rank-panel">
+    <view class="podium">
+      <view class="podium-col place-2"><view class="skeleton-avatar big"></view><view class="skeleton-line w60"></view><view class="podium-block"></view></view>
+      <view class="podium-col place-1"><view class="skeleton-avatar huge"></view><view class="skeleton-line w60"></view><view class="podium-block"></view></view>
+      <view class="podium-col place-3"><view class="skeleton-avatar big"></view><view class="skeleton-line w60"></view><view class="podium-block"></view></view>
     </view>
   </view>
 
-  <!-- 排行榜列表 -->
-  <view wx:if="{{ranking.length > 0}}" class="rank-list">
-    <view class="rank-item card {{index === 0 ? 'rank-item-first' : ''}} {{index === 1 ? 'rank-item-second' : ''}} {{index === 2 ? 'rank-item-third' : ''}}" wx:for="{{ranking}}" wx:key="openId">
-      <view class="rank-left">
-        <text class="rank-medal {{index <= 2 ? 'rank-medal-top' : ''}}" wx:if="{{index === 0}}">👑</text>
-        <text class="rank-medal {{index <= 2 ? 'rank-medal-top' : ''}}" wx:elif="{{index === 1}}">🥈</text>
-        <text class="rank-medal {{index <= 2 ? 'rank-medal-top' : ''}}" wx:elif="{{index === 2}}">🥉</text>
-        <text class="rank-number" wx:else>{{index + 1}}</text>
-
-        <image class="rank-avatar" src="{{item.avatarUrl || '/images/profile.png'}}" mode="aspectFill"></image>
-        <view class="rank-info">
-          <text class="rank-name">{{item.nickName}}</text>
-          <text class="rank-weight" wx:if="{{item.currentWeight}}">当前 {{item.currentWeight}} {{unitLabel}}</text>
+  <block wx:elif="{{groups.length > 0}}">
+    <!-- 领奖台：2 - 1 - 3 -->
+    <view class="rank-panel" wx:if="{{podium.length > 0 && totalCount > 0}}">
+      <view class="podium">
+        <view class="podium-col place-{{item.place}}" wx:for="{{podium}}" wx:key="key">
+          <block wx:if="{{!item.empty}}">
+            <view class="podium-avatar-wrap">
+              <image class="podium-avatar" src="{{item.avatarUrl || '/images/cat-avatar.jpg'}}" mode="aspectFill"></image>
+              <view class="podium-badge" wx:if="{{item.place === 1}}">
+                <text class="podium-badge-text">1</text>
+              </view>
+            </view>
+            <text class="podium-name">{{item.nickName}}{{item.isMe ? ' · 我' : ''}}</text>
+            <view class="podium-value fig-row">
+              <text class="podium-num fig-num {{item.valueDir}}">{{item.metricValue}}</text>
+              <text class="podium-unit fig-unit">{{item.metricUnit}}</text>
+            </view>
+            <view class="podium-block"><text class="podium-rank fig-num">{{item.place}}</text></view>
+          </block>
+          <block wx:else>
+            <view class="podium-avatar-wrap empty"></view>
+            <text class="podium-name faint">虚位以待</text>
+            <view class="podium-value fig-row"><text class="podium-num fig-num faint">—</text></view>
+            <view class="podium-block empty"><text class="podium-rank fig-num">{{item.place}}</text></view>
+          </block>
         </view>
       </view>
-      <view class="rank-right">
-        <text class="rank-value {{activeTab === 'streak' ? 'streak-value' : ''}}">
-          <text wx:if="{{activeTab === 'loss'}}">
-            <text wx:if="{{item.totalChange > 0}}">↓ {{item.changeDisplay}}</text>
-            <text wx:elif="{{item.totalChange < 0}}">↑ {{item.changeDisplay}}</text>
-            <text wx:else>0</text>
-          </text>
-          <text wx:elif="{{activeTab === 'percent'}}">{{item.changePercent}}%</text>
-          <text wx:else>{{item.streak}}天</text>
-        </text>
-        <text class="rank-unit" wx:if="{{activeTab === 'loss'}}">{{unitLabel}}</text>
-        <view class="checkin-badge" wx:if="{{item.checkedInToday}}">
-          <text class="badge badge-success">已打卡</text>
+
+      <!-- 第 4 名之后 -->
+      <view class="board" wx:if="{{rest.length > 0}}">
+        <view class="board-row {{item.isMe ? 'is-me' : ''}}" wx:for="{{rest}}" wx:key="openId">
+          <text class="board-rank">{{item.place}}</text>
+          <image class="board-avatar" src="{{item.avatarUrl || '/images/cat-avatar.jpg'}}" mode="aspectFill"></image>
+          <view class="board-copy">
+            <view class="board-name-line">
+              <text class="board-name">{{item.nickName}}</text>
+              <text class="board-me" wx:if="{{item.isMe}}">我</text>
+            </view>
+            <text class="board-sub">{{item.subText}}</text>
+          </view>
+          <view class="board-value fig-row">
+            <text class="board-num fig-num {{item.valueDir}}">{{item.metricValue}}</text>
+            <text class="board-unit fig-unit">{{item.metricUnit}}</text>
+          </view>
         </view>
       </view>
+
+      <text class="board-idle" wx:if="{{idleCount > 0}}">还有 {{idleCount}} 位伙伴还没有记录，记录后就能上榜</text>
     </view>
+
+    <!-- 小组存在但没人上榜 -->
+    <view class="empty-state rank-empty" wx:elif="{{!loading}}">
+      <text class="rank-empty-mark">✳</text>
+      <text class="rank-empty-title">榜上还空着</text>
+      <text class="rank-empty-note">记录一次体重，就能成为第一个名字</text>
+      <button class="btn-primary rank-empty-cta" bindtap="goRecord">记录今天的体重</button>
+    </view>
+  </block>
+
+  <!-- 没有小组 -->
+  <view class="empty-state rank-empty" wx:else>
+    <text class="rank-empty-mark">✳</text>
+    <text class="rank-empty-title">先有一个小组</text>
+    <text class="rank-empty-note">自己建一个，或用邀请码加入伙伴的小组</text>
+    <button class="btn-primary rank-empty-cta" bindtap="goGroup">创建或加入小组</button>
   </view>
 
-  <!-- 骨架屏 -->
-  <view wx:elif="{{loading}}" class="rank-list">
-    <view class="rank-item card" wx:for="{{5}}" wx:key="*this">
-      <view class="rank-left">
-        <view class="skeleton-circle"></view>
-        <view class="skeleton-avatar"></view>
-        <view class="rank-info">
-          <view class="skeleton-line skeleton-name"></view>
-          <view class="skeleton-line skeleton-curweight"></view>
-        </view>
+  <!-- 我的排名：不在前三时贴底显示 -->
+  <view class="my-bar" wx:if="{{groups.length > 0 && !loading}}">
+    <block wx:if="{{me && !meInPodium}}">
+      <text class="my-bar-rank fig-num">{{me.place}}</text>
+      <image class="my-bar-avatar" src="{{me.avatarUrl || '/images/cat-avatar.jpg'}}" mode="aspectFill"></image>
+      <view class="my-bar-copy">
+        <text class="my-bar-name">我 · {{me.nickName}}</text>
+        <text class="my-bar-sub">{{me.subText}}</text>
       </view>
-      <view class="rank-right">
-        <view class="skeleton-line skeleton-value"></view>
+      <view class="my-bar-value fig-row">
+        <text class="my-bar-num fig-num">{{me.metricValue}}</text>
+        <text class="my-bar-unit fig-unit">{{me.metricUnit}}</text>
       </view>
-    </view>
-  </view>
-
-  <!-- 空状态 -->
-  <view class="empty-state" wx:else>
-    <text>暂无排行数据</text>
-    <text>加入群组或开始打卡后可见</text>
+    </block>
+    <block wx:elif="{{me}}">
+      <text class="my-bar-rank fig-num">第 {{me.place}}</text>
+      <view class="my-bar-copy">
+        <text class="my-bar-name">你已经在榜上</text>
+        <text class="my-bar-sub">保持记录，名次会稳住</text>
+      </view>
+      <text class="my-bar-cta" bindtap="goRecord">记录</text>
+    </block>
+    <block wx:else>
+      <view class="my-bar-copy">
+        <text class="my-bar-name">你还没有上榜</text>
+        <text class="my-bar-sub">记录今天的体重，就会出现在这里</text>
+      </view>
+      <text class="my-bar-cta" bindtap="goRecord">去记录</text>
+    </block>
   </view>
 </view>

@@ -4,43 +4,43 @@
     "pages/record/record",
     "pages/rank/rank",
     "pages/profile/profile",
+    "pages/goal/goal",
+    "pages/unit/unit",
     "pages/group/group",
+    "pages/groups/groups",
     "pages/history/history"
   ],
   "window": {
     "navigationBarTitleText": "斤斤轻体重记",
-    "navigationBarBackgroundColor": "#10b981",
-    "navigationBarTextStyle": "white",
-    "backgroundColor": "#f8fafc"
+    "navigationBarBackgroundColor": "#f0ede4",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f0ede4"
   },
   "tabBar": {
-    "color": "#94a3b8",
-    "selectedColor": "#10b981",
-    "backgroundColor": "#ffffff",
+    "color": "#8a9086",
+    "selectedColor": "#2f4b39",
+    "backgroundColor": "#fbf9f3",
     "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页",
-        "iconPath": "images/home.png",
-        "selectedIconPath": "images/home-active.png"
+        "text": "今天",
+        "iconPath": "images/tab-today.png",
+        "selectedIconPath": "images/tab-today-active.png"
       },
       {
-        "pagePath": "pages/rank/rank",
-        "text": "排行",
-        "iconPath": "images/rank.png",
-        "selectedIconPath": "images/rank-active.png"
+        "pagePath": "pages/group/group",
+        "text": "小组",
+        "iconPath": "images/tab-group.png",
+        "selectedIconPath": "images/tab-group-active.png"
       },
       {
         "pagePath": "pages/profile/profile",
-        "text": "我的",
-        "iconPath": "images/profile.png",
-        "selectedIconPath": "images/profile-active.png"
+        "text": "我",
+        "iconPath": "images/tab-me.png",
+        "selectedIconPath": "images/tab-me-active.png"
       }
     ]
-  },
-  "usingComponents": {
-    "trend-chart": "components/trend-chart/trend-chart"
   },
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",

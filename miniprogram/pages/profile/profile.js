@@ -14,6 +14,13 @@ Page({
     totalDays: 0,
     groupCount: 0,
     groupText: '',
+    goalProgress: null,
+    hasGoal: false,
+    goalTarget: '',
+    editingProfile: false,
+    editingGoal: false,
+    savingProfile: false,
+    saving: false,
     userInfo: null
   },
 
@@ -24,7 +31,6 @@ Page({
   async loadProfile() {
     const app = getApp()
     const forceRefresh = app.globalData.needsRefresh
-    app.globalData.needsRefresh = false
 
     // 需要最新数据：强制刷新 / 未登录 / 尚无 stats 快照
     const user = await app.ensureUser(forceRefresh, '加载中')
@@ -101,7 +107,63 @@ Page({
       totalDays,
       groupCount,
       groupText,
+      goalProgress: this.getGoalProgress(user),
+      hasGoal: !!user.goalWeight,
+      goalTarget: user.goalWeight ? util.displayWeight(user.goalWeight, weightUnit) : '',
       userInfo: user
+    })
+  },
+
+  getGoalProgress(user) {
+    const current = (user.stats || {}).currentWeight
+    const initial = user.initialWeight || (user.stats || {}).firstWeight
+    const goal = user.goalWeight
+    if (current == null || !initial || !goal) return null
+    const gain = user.goalType === 'gain'
+    const total = gain ? goal - initial : initial - goal
+    if (total <= 0) return null
+    const achieved = gain ? current - initial : initial - current
+    const reached = gain ? current >= goal : current <= goal
+    const percent = reached ? 100 : Math.max(0, Math.min(99, Math.round(achieved / total * 100)))
+    const unit = user.weightUnit || 'kg'
+    return {
+      unitLabel: util.displayUnit(unit),
+      percent,
+      caption: reached ? '已达到设定目标，继续关注长期变化' : `距目标 ${util.displayWeight(Math.abs(current - goal), unit)} ${util.displayUnit(unit)}`,
+      current: util.displayWeight(current, unit),
+      start: util.displayWeight(initial, unit),
+      target: util.displayWeight(goal, unit)
+    }
+  },
+
+  startEditProfile() {
+    this.setData({ editingProfile: true })
+  },
+
+  cancelEditProfile() {
+    const user = this.data.userInfo || {}
+    this.setData({ editingProfile: false, nickName: user.nickName || '用户' })
+  },
+
+  toggleGoalEditor() {
+    this.goGoal()
+  },
+
+  goGoal() { wx.navigateTo({ url: '/pages/goal/goal' }) },
+
+  goUnit() { wx.navigateTo({ url: '/pages/unit/unit' }) },
+
+  resetGoalDraft() {
+    const user = this.data.userInfo || {}
+    const unit = user.weightUnit || 'kg'
+    const stats = user.stats || {}
+    this.setData({
+      weightUnit: unit,
+      unitLabel: util.displayUnit(unit),
+      goalType: user.goalType || 'lose',
+      goalWeightText: user.goalWeight ? util.displayWeight(user.goalWeight, unit) : '',
+      initialWeightText: user.initialWeight ? util.displayWeight(user.initialWeight, unit) : '',
+      currentWeight: stats.currentWeight != null ? util.displayWeight(stats.currentWeight, unit) : null
     })
   },
 
@@ -109,46 +171,12 @@ Page({
     this.setData({ goalType: e.currentTarget.dataset.type })
   },
 
-  async setWeightUnit(e) {
+  setWeightUnit(e) {
     const oldUnit = this.data.weightUnit
     const newUnit = e.currentTarget.dataset.unit
-    if (oldUnit === newUnit) return
-
-    const convertValue = (text) => {
-      const v = parseFloat(text)
-      if (!v || v <= 0) return text
-      if (oldUnit === 'kg' && newUnit === 'jin') return (v * 2).toFixed(1)
-      if (oldUnit === 'jin' && newUnit === 'kg') return (v / 2).toFixed(1)
-      return text
-    }
-
-    this.setData({
-      weightUnit: newUnit,
-      unitLabel: util.displayUnit(newUnit),
-      goalWeightText: convertValue(this.data.goalWeightText),
-      initialWeightText: convertValue(this.data.initialWeightText),
-      currentWeight: convertValue(this.data.currentWeight)
-    })
-
-    // 同步更新全局缓存单位并标记刷新（await 之前），避免切页太快时首页读到旧单位
-    const app = getApp()
-    if (app.globalData.userInfo) {
-      app.globalData.userInfo.weightUnit = newUnit
-    }
-    app.globalData.needsRefresh = true
-
-    // 持久化到云端
-    try {
-      const res = await wx.cloud.callFunction({
-        name: 'updateProfile',
-        data: { weightUnit: newUnit }
-      })
-      if (res.result.code === 0) {
-        app.setUserInfo(res.result.data)
-      }
-    } catch (err) {
-      console.error('单位保存失败', err)
-    }
+    if (oldUnit === newUnit || this.data.saving) return
+    const convert = value => value ? util.displayWeight(util.toKg(Number(value), oldUnit), newUnit) : value
+    this.setData({ weightUnit: newUnit, unitLabel: util.displayUnit(newUnit), goalWeightText: convert(this.data.goalWeightText), initialWeightText: convert(this.data.initialWeightText), currentWeight: convert(this.data.currentWeight) })
   },
 
   onGoalInput(e) {
@@ -159,7 +187,7 @@ Page({
     this.setData({ initialWeightText: e.detail.value })
   },
 
- async onChooseAvatar(e) {
+  async onChooseAvatar(e) {
     const avatarUrl = e.detail.avatarUrl
     if (!avatarUrl) return
     this.setData({ avatarUrl })
@@ -185,18 +213,15 @@ Page({
     this.setData({ nickName: e.detail.value })
   },
 
-  async onNicknameBlur() {
-    if (this.data.nickName && this.data.nickName.trim() !== '') {
-      await this.saveProfile()
-    }
-  },
-
   async saveProfile() {
+    if (this.data.savingProfile) return
     const nickName = this.data.nickName
     if (!nickName || nickName.trim() === '') {
+      util.showToast('昵称不能为空')
       return
     }
 
+    this.setData({ savingProfile: true })
     try {
       const cloudData = { nickName: nickName.trim() }
       if (this.data.avatarTempUrl) {
@@ -217,57 +242,62 @@ Page({
       const user = res.result.data
       const app = getApp()
       app.setUserInfo(user)
-      this.loadProfile()
+      app.clearPageCaches()
+      this.setData({ userInfo: user, avatarTempUrl: '', nickName: user.nickName, editingProfile: false })
+      util.showSuccess('资料已保存')
     } catch (err) {
       console.error(err)
-      wx.showToast({ title: '保存失败: ' + err.message, icon: 'none' })
-    }
+      util.showError('保存失败，请重试')
+    } finally { this.setData({ savingProfile: false }) }
   },
 
   async saveGoal() {
-    const goalWeight = parseFloat(this.data.goalWeightText)
-    if (!goalWeight || goalWeight <= 0 || goalWeight > 300) {
-      util.showToast('请输入有效的目标体重')
-      return
-    }
-
-    util.showLoading('保存中...')
+    if (this.data.saving) return
+    if (!this.data.userInfo) { util.showToast('请等待个人数据加载完成'); return }
+    const unit = this.data.weightUnit
+    const goal = util.toKg(Number(this.data.goalWeightText), unit)
+    const initial = this.data.initialWeightText ? util.toKg(Number(this.data.initialWeightText), unit) : null
+    if (!Number.isFinite(goal) || goal <= 0 || goal > 300) { util.showToast('请填写有效的目标体重'); return }
+    if (initial !== null && (!Number.isFinite(initial) || initial <= 0 || initial > 300)) { util.showToast('请填写有效的初始体重'); return }
+    const baseline = initial || (this.data.userInfo.stats || {}).firstWeight
+    if (baseline && ((this.data.goalType === 'lose' && goal >= baseline) || (this.data.goalType === 'gain' && goal <= baseline))) { util.showToast('目标体重与所选方向不一致'); return }
+    this.setData({ saving: true })
     try {
-      const cloudData = {
-        goalWeight: Math.round(util.toKg(goalWeight, this.data.weightUnit) * 100) / 100,
-        goalType: this.data.goalType,
-        weightUnit: this.data.weightUnit
-      }
-      const initialWeight = parseFloat(this.data.initialWeightText)
-      if (initialWeight > 0 && initialWeight <= 300) {
-        cloudData.initialWeight = Math.round(util.toKg(initialWeight, this.data.weightUnit) * 100) / 100
-      }
-
-      const res = await wx.cloud.callFunction({
-        name: 'updateProfile',
-        data: cloudData
+      const data = { goalWeight: Math.round(goal * 100) / 100, goalType: this.data.goalType, weightUnit: unit }
+      if (initial !== null) data.initialWeight = Math.round(initial * 100) / 100
+      const res = await wx.cloud.callFunction({ name: 'updateProfile', data })
+      if (!res.result || res.result.code !== 0) throw new Error('保存失败')
+      getApp().setUserInfo(res.result.data)
+      getApp().clearPageCaches()
+      getApp().globalData.needsRefresh = true
+      this.setData({
+        userInfo: res.result.data,
+        goalProgress: this.getGoalProgress(res.result.data),
+        hasGoal: true,
+        goalTarget: util.displayWeight(res.result.data.goalWeight, res.result.data.weightUnit),
+        editingGoal: false
       })
-
-      if (res.result.code !== 0) {
-        util.showError(res.result.msg || '保存失败')
-        return
-      }
-
-      // 更新全局数据
-      const user = res.result.data
-      const app = getApp()
-      app.setUserInfo(user)
-
       util.showSuccess('目标已保存')
-      util.hideLoading()
-      this.loadProfile()
-    } catch (err) {
-      console.error(err)
-      util.showError('保存失败')
-    }
+    } catch (err) { util.showError('保存失败，请重试') }
+    finally { this.setData({ saving: false }) }
   },
 
   goGroup() {
-    wx.navigateTo({ url: '/pages/group/group' })
+    wx.switchTab({ url: '/pages/group/group' })
   },
+
+  // 「所属小组」不是快捷入口，而是我的小组清单：多小组时先选再进，
+  // 免得点进去看到的是上次停留的那个组、和自己想的不是同一个。
+  goGroups() {
+    if (this.data.groupCount === 0) {
+      getApp().globalData.openJoinForm = true
+      wx.switchTab({ url: '/pages/group/group' })
+      return
+    }
+    wx.navigateTo({ url: '/pages/groups/groups' })
+  },
+
+  goRecord() {
+    wx.navigateTo({ url: '/pages/record/record' })
+  }
 })

@@ -72,6 +72,20 @@ function toKg(value, unit) {
   return unit === UNIT.JIN ? value / 2 : value
 }
 
+// 大数字输入框的宽度（rpx）。
+// input 天生是方块，宽度固定的话「120.6」和「斤」之间会空出一大段，看起来像两个东西；
+// 按字数算宽度，单位就能紧跟着数字。衬线数字每字符约 0.62em，小数点约 0.32em。
+function figureWidth(text, sizeRpx, minRpx) {
+  const s = String(text == null ? '' : text)
+  let em = 0
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i]
+    em += (ch === '.' || ch === ',') ? 0.32 : (ch === ' ') ? 0.30 : 0.62
+  }
+  const w = Math.round((em + 0.32) * sizeRpx)
+  return Math.max(minRpx || 0, Math.min(w, (sizeRpx * 7)))
+}
+
 module.exports = {
   formatDate,
   getToday,
@@ -87,5 +101,6 @@ module.exports = {
   UNIT,
   displayWeight,
   displayUnit,
-  toKg
+  toKg,
+  figureWidth
 }

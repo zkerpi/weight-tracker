@@ -1,0 +1,39 @@
+<view class="page unit-page">
+  <view class="page-head">
+    <view class="page-head-copy">
+      <text class="display-title long">体重单位</text>
+      <text class="page-tagline">只改变显示方式，不动任何记录</text>
+    </view>
+  </view>
+
+  <view class="unit-preview" wx:if="{{hasData}}">
+    <text class="unit-preview-label">当前体重</text>
+    <view class="unit-preview-figure fig-row">
+      <text class="unit-preview-num fig-num">{{currentText}}</text>
+      <text class="unit-preview-unit fig-unit">{{unitLabel}}</text>
+    </view>
+  </view>
+
+  <view class="unit-options">
+    <view class="unit-option {{unit === item.key ? 'active' : ''}}" wx:for="{{options}}" wx:key="key" bindtap="choose" data-unit="{{item.key}}">
+      <view class="unit-option-main">
+        <view class="unit-option-copy">
+          <view class="unit-option-title-line">
+            <text class="unit-option-name">{{item.label}}</text>
+            <text class="unit-option-code">{{item.code}}</text>
+          </view>
+          <text class="unit-option-desc">{{item.desc}}</text>
+        </view>
+        <view class="unit-radio {{unit === item.key ? 'checked' : ''}}">
+          <text wx:if="{{unit === item.key}}" class="unit-radio-dot">✓</text>
+        </view>
+      </view>
+      <view class="unit-sample fig-row">
+        <text class="unit-sample-num fig-num">{{item.sample}}</text>
+        <text class="unit-sample-unit fig-unit">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <text class="unit-note">记录本身以公斤存储，所以切换单位不会改写历史数据，也不会影响小组榜与目标的进度计算。</text>
+</view>

@@ -21,6 +21,18 @@ exports.main = async (event, context) => {
 
     const user = userRes.data[0]
     const updateData = {}
+    for (const key of ['goalWeight', 'initialWeight']) {
+      if (event[key] !== undefined && (typeof event[key] !== 'number' || !Number.isFinite(event[key]) || event[key] <= 0 || event[key] > 300)) return { code: -1, msg: '体重数据无效' }
+    }
+    if (event.goalType !== undefined && !['lose', 'gain'].includes(event.goalType)) return { code: -1, msg: '目标方向无效' }
+    if (event.weightUnit !== undefined && !['kg', 'jin'].includes(event.weightUnit)) return { code: -1, msg: '体重单位无效' }
+    if (event.nickName !== undefined && (typeof event.nickName !== 'string' || !event.nickName.trim() || event.nickName.length > 20)) return { code: -1, msg: '昵称需为1至20字' }
+    if (event.goalWeight !== undefined || event.initialWeight !== undefined || event.goalType !== undefined) {
+      const goal = event.goalWeight === undefined ? user.goalWeight : event.goalWeight
+      const initial = event.initialWeight === undefined ? (user.initialWeight || (user.stats || {}).firstWeight) : event.initialWeight
+      const direction = event.goalType || user.goalType || 'lose'
+      if (goal && initial && (direction === 'lose' ? goal >= initial : goal <= initial)) return { code: -1, msg: '目标体重与方向不一致' }
+    }
 
     if (event.nickName) {
       updateData.nickName = event.nickName

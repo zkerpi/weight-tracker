@@ -1,217 +1,84 @@
-.group-switcher {
-  display: flex;
-  gap: 12rpx;
-  margin-bottom: 20rpx;
-  overflow-x: auto;
-  white-space: nowrap;
-  scrollbar-width: none;
-}
+/* 小组页 —— 与其他页同一套：衬线标题 + 胶囊分段 + 单卡片动态列表 */
 
+.group-page { padding:12rpx 40rpx calc(150rpx + env(safe-area-inset-bottom)); }
+
+.group-head { align-items:flex-start; margin-bottom:32rpx; }
+.group-invite {
+  width:76rpx; height:76rpx; margin:0; padding:0; border-radius:50%;
+  background:transparent; line-height:normal;
+}
+.group-invite-icon { width:56rpx; height:56rpx; margin:10rpx 0 0 10rpx; }
+
+/* 分段控件 */
+.mode-tabs { display:flex; height:84rpx; padding:6rpx; border-radius:999rpx; background:#eae6da; }
+.mode-tab {
+  display:flex; flex:1; align-items:center; justify-content:center;
+  border-radius:999rpx; color:#6f766e; font-size:27rpx;
+}
+.mode-tab.active { background:var(--primary); color:#fff; font-weight:600; }
+
+/* 动态列表：卡片比文字栏更靠外，和首页的面板同一种「外扩」关系 */
+.feed {
+  margin:24rpx -16rpx 0; padding:4rpx 30rpx 6rpx;
+  border:1rpx solid #e8e3d5; border-radius:26rpx; background:#f8f6ee;
+}
+.feed-head { display:flex; align-items:center; justify-content:space-between; padding:18rpx 0 8rpx; }
+.feed-head-title { color:var(--muted); font-size:22rpx; letter-spacing:1rpx; }
+.feed-head-link { color:var(--muted); font-size:22rpx; }
+.feed-empty { padding:70rpx 0; color:var(--muted); font-size:23rpx; text-align:center; }
+.feed-row { display:flex; align-items:center; padding:20rpx 0; border-top:1rpx solid #efebe0; }
+.feed-avatar { width:72rpx; height:72rpx; border-radius:50%; background:#e9e6db; }
+.feed-copy { display:flex; flex:1; min-width:0; flex-direction:column; margin-left:20rpx; }
+.feed-name-line { display:flex; align-items:baseline; }
+.feed-name { max-width:250rpx; overflow:hidden; color:var(--text); font-size:28rpx; text-overflow:ellipsis; white-space:nowrap; }
+.feed-time { margin-left:10rpx; color:var(--muted); font-size:21rpx; }
+.feed-note { margin-top:4rpx; color:var(--muted); font-size:22rpx; }
+.feed-value { display:flex; flex-shrink:0; flex-direction:column; align-items:flex-end; margin-left:16rpx; }
+.feed-weight { font-size:34rpx; }
+.feed-delta { margin-top:6rpx; color:#5a7a63; font-size:21rpx; }
+.feed-delta.up { color:#b4765a; }
+.feed-value-empty .feed-empty-num { color:#c3c8bd; font-size:30rpx; line-height:1.1; }
+
+/* 小组切换：放在列表之前，多小组时一眼可见 */
+.group-switcher { display:flex; gap:12rpx; margin:18rpx 0 0; overflow-x:auto; }
+.group-switcher + .feed { margin-top:14rpx; }
 .group-chip {
-  flex-shrink: 0;
-  padding: 12rpx 28rpx;
-  font-size: 26rpx;
-  color: var(--text-secondary);
-  background: var(--card);
-  border-radius: 999rpx;
-  box-shadow: var(--shadow);
+  flex-shrink:0; padding:12rpx 24rpx; border:1rpx solid var(--line); border-radius:999rpx;
+  background:var(--surface); color:var(--muted); font-size:23rpx;
 }
+.group-chip.active { border-color:var(--primary); background:var(--primary); color:#fff; }
+.group-chip-add { color:var(--primary); }
 
-.group-chip.active {
-  background: var(--primary);
-  color: white;
-  font-weight: 600;
-}
-
-.group-chip-add {
-  border: 1rpx dashed var(--text-muted);
-  box-shadow: none;
-}
-
-.form-row {
-  margin-bottom: 20rpx;
-}
-
-.code-input {
-  text-align: center;
-  font-size: 48rpx;
-  font-weight: 700;
-  letter-spacing: 12rpx;
-  text-transform: uppercase;
-}
-
-.my-group-info {
-  margin-bottom: 16rpx;
-}
-
-.group-detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid var(--border);
-}
-
-.group-detail-row:last-child {
-  border-bottom: none;
-}
-
-.group-detail-label {
-  font-size: 28rpx;
-  color: var(--text-secondary);
-}
-
-.group-detail-value {
-  font-size: 28rpx;
-  color: var(--text);
-  font-weight: 500;
-}
-
-.invite-code-box {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  background: var(--primary-light);
-  padding: 8rpx 20rpx;
-  border-radius: 10rpx;
-}
-
-.invite-code {
-  font-size: 36rpx;
-  font-weight: 800;
-  color: var(--primary);
-  letter-spacing: 6rpx;
-}
-
-.copy-hint {
-  font-size: 22rpx;
-  color: var(--primary);
-  opacity: 0.7;
-}
-
-.btn-danger-outline {
-  border-color: var(--danger);
-  color: var(--danger);
-}
-
-.btn-group {
-  margin-top: 16rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-/* 成员列表 */
-.member-section {
-  margin: 16rpx 0;
-  padding-top: 16rpx;
-  border-top: 1rpx solid var(--border);
-}
-
-.member-section-title {
-  font-size: 26rpx;
-  color: var(--text-secondary);
-  display: block;
-  margin-bottom: 16rpx;
-}
-
-.member-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20rpx;
-}
-
-.member-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8rpx;
-  width: 100rpx;
-}
-
-.member-avatar {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 50%;
-  background: var(--border);
-}
-
-.member-name {
-  font-size: 22rpx;
-  color: var(--text-secondary);
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100rpx;
-}
-
-.creator-badge {
-  font-size: 18rpx;
-  color: var(--primary);
-  background: var(--primary-light);
-  padding: 2rpx 10rpx;
-  border-radius: 6rpx;
-}
-
-.kick-btn {
-  font-size: 20rpx;
-  color: var(--danger);
-  padding: 4rpx 10rpx;
-  border: 1rpx solid var(--danger);
-  border-radius: 8rpx;
-}
-
-.kick-btn:active {
-  opacity: 0.6;
-}
-
-.group-detail-value-row {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.edit-name-icon {
-  font-size: 28rpx;
-  color: var(--primary);
-  padding: 4rpx;
-}
-
-.edit-name-icon:active {
-  opacity: 0.6;
-}
-
-.edit-name-row {
-  display: flex;
-  flex-direction: column;
-  gap: 10rpx;
-  align-items: flex-end;
-}
-
-.edit-name-input {
-  text-align: right;
-  font-size: 28rpx;
-  width: 300rpx;
-}
-
-.edit-name-actions {
-  display: flex;
-  gap: 16rpx;
-}
-
-.edit-name-btn {
-  font-size: 24rpx;
-  padding: 4rpx 16rpx;
-  border-radius: 8rpx;
-}
-
-.edit-name-btn.save {
-  color: var(--primary);
-  background: var(--primary-light);
-}
-
-.edit-name-btn.cancel {
-  color: var(--text-muted);
-  background: var(--bg);
-}
+/* 表单与设置 */
+.form-row { margin:18rpx 0; }
+.input-field { width:100%; height:84rpx; padding:0 22rpx; border:1rpx solid var(--line); border-radius:18rpx; background:#f5f2e9; font-size:26rpx; }
+.code-input { letter-spacing:6rpx; text-align:center; }
+.my-group-info { margin-top:10rpx; }
+.group-detail-row { display:flex; align-items:center; justify-content:space-between; min-height:84rpx; border-bottom:1rpx solid #efebe0; }
+.group-detail-last { border-bottom:none; }
+.group-detail-label { color:var(--muted); font-size:23rpx; }
+.group-detail-value { color:var(--text); font-size:25rpx; }
+.group-detail-value-row { display:flex; align-items:center; gap:12rpx; }
+.edit-name-row { display:flex; flex:1; flex-direction:column; gap:10rpx; padding:14rpx 0; }
+.edit-name-input { height:72rpx; }
+.edit-name-actions { display:flex; gap:18rpx; }
+.edit-name-btn { font-size:23rpx; }
+.edit-name-btn.save { color:var(--primary); }
+.edit-name-btn.cancel { color:var(--muted); }
+.edit-name-icon { color:var(--primary); font-size:26rpx; }
+.invite-code-box { display:flex; align-items:center; gap:12rpx; }
+.invite-code { color:var(--primary); font-size:28rpx; letter-spacing:4rpx; }
+.copy-hint { color:var(--faint); font-size:20rpx; }
+.member-section { margin-top:26rpx; }
+.member-section-title { display:block; margin-bottom:12rpx; color:var(--text); font-size:24rpx; font-weight:650; }
+.member-list { border:1rpx solid var(--line); border-radius:18rpx; overflow:hidden; }
+.member-item { display:flex; align-items:center; gap:14rpx; min-height:96rpx; padding:12rpx 18rpx; border-bottom:1rpx solid #efebe0; }
+.member-item:last-child { border-bottom:none; }
+.member-avatar { width:56rpx; height:56rpx; border-radius:50%; }
+.member-copy { display:flex; flex:1; flex-direction:column; }
+.member-name { color:var(--text); font-size:25rpx; }
+.member-status { margin-top:2rpx; color:var(--muted); font-size:20rpx; }
+.creator-badge { color:var(--accent); font-size:20rpx; }
+.kick-btn { padding:8rpx 12rpx; color:var(--danger); font-size:21rpx; }
+.btn-group { display:flex; flex-direction:column; gap:16rpx; margin-top:28rpx; }
+.btn-danger-outline { border-color:#dcc7bd; color:var(--danger); }

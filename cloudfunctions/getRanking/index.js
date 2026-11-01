@@ -20,6 +20,9 @@ exports.main = async (event, context) => {
   }
 
   try {
+    const { OPENID } = cloud.getWXContext()
+    const groupRes = await db.collection('groups').doc(groupId).get()
+    if (!OPENID || !groupRes.data || !(groupRes.data.members || []).includes(OPENID)) return { code: -1, msg: '仅小组成员可查看排行' }
     // 兼容迁移期：老用户还是单值 groupId，新用户是 groupIds 数组
     const userRes = await db.collection('users').where(
       db.command.or([
@@ -43,7 +46,7 @@ exports.main = async (event, context) => {
       const firstWeight = s.firstWeight || null
       const currentWeight = s.currentWeight || null
       const totalDays = s.totalDays || 0
-      const streak = s.streak || 0
+      const streak = s.latestDate >= shared.getYesterday(today) ? s.streak || 0 : 0
       const checkedInToday = s.latestDate === today
 
       // 减重/增重幅度

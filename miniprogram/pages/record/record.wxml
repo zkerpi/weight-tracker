@@ -1,63 +1,21 @@
 <view class="page record-page">
-  <view class="card">
-    <view class="record-header">
-      <text class="section-title">{{isUpdate ? '更新体重' : '记录体重'}}</text>
-      <picker mode="date" value="{{currentDate}}" bindchange="onDateChange" end="{{todayDate}}">
-        <text class="record-date">{{currentDate}}</text>
-      </picker>
-    </view>
-
-    <view class="weight-input-area">
-      <view class="weight-input-wrapper">
-        <input class="weight-input" type="digit" placeholder="输入体重" value="{{weight}}" bindinput="onWeightInput" focus="{{!isUpdate}}" maxlength="5"></input>
-        <text class="weight-input-unit">{{unitLabel}}</text>
-      </view>
-      <text class="weight-hint" wx:if="{{!weight && !isUpdate}}">请输入今天早上的体重</text>
-      <text class="weight-hint" wx:elif="{{isUpdate}}">当前记录：{{existingWeight}} {{unitLabel}}，输入新值修改</text>
-    </view>
-
-    <view class="quick-weights">
-      <block wx:for="{{quickWeights}}" wx:key="*this">
-        <view class="quick-weight-btn {{weight == item ? 'selected' : ''}}" bindtap="selectQuickWeight" data-weight="{{item}}">
-          <text>{{item}}</text>
-        </view>
-      </block>
-    </view>
-
-    <!-- 备注 -->
-    <view class="note-input-area">
-      <input class="note-input" type="text" placeholder="备注 (选填)" value="{{note}}" bindinput="onNoteInput" maxlength="30"></input>
-    </view>
-
-    <button class="btn-primary" bindtap="submitRecord" disabled="{{!weight || weight <= 0 || submitting}}">
-      {{isUpdate ? '更新记录' : '提交打卡'}}
-    </button>
-
-    <!-- 历史体重提醒 -->
-    <view class="weight-compare" wx:if="{{showCompare}}">
-      <text wx:if="{{weightUp}}" class="compare-up">
-        较上次 +{{diffFormatted}} {{unitLabel}} ↑
-      </text>
-      <text wx:elif="{{weightDown}}" class="compare-down">
-        较上次 {{diffFormatted}} {{unitLabel}} ↓
-      </text>
-      <text wx:else class="compare-same">
-        与上次持平
-      </text>
+  <view class="page-head">
+    <view class="page-head-copy">
+      <text class="display-title long">记录体重</text>
+      <text class="page-tagline">选择日期，记下这次测量</text>
     </view>
   </view>
-
-  <!-- 打卡成功分享 -->
-  <view class="share-overlay" wx:if="{{showShareBtn}}">
-    <view class="share-card">
-      <text class="share-title">打卡成功！</text>
-      <text class="share-weight">{{displayedWeight}} {{unitLabel}}</text>
-      <text class="share-date">{{currentDate}}</text>
-      <text class="share-msg">{{shareMsg}}</text>
-      <button class="btn-primary" open-type="share">分享到微信</button>
-      <text class="share-skip" bindtap="closeShare">稍后再说</text>
-    </view>
+  <view class="card entry-card">
+    <view class="record-header"><text class="small-label">记录日期</text><picker mode="date" value="{{currentDate}}" bindchange="onDateChange" end="{{todayDate}}" disabled="{{submitting || statusLoading}}"><text class="record-date">{{currentDate === todayDate ? '今天 · ' : ''}}{{currentDate}} ⌄</text></picker></view>
+    <view wx:if="{{statusLoading}}" class="small-label">正在读取当天记录…</view>
+    <view wx:if="{{loadError}}" class="notice" bindtap="loadUserStatus">{{loadError}} · 重试</view>
+    <view class="weight-input-area"><view class="weight-input-wrapper"><input class="weight-input fig-num" style="width:{{weightW}}rpx" type="digit" placeholder="0.0" value="{{weight}}" bindinput="onWeightInput" maxlength="6" disabled="{{statusLoading || submitting}}"/><text class="weight-input-unit fig-unit">{{unitLabel}}</text></view><text class="weight-hint">{{isUpdate ? '这一天已记录，保存将更新原记录' : '点击数字输入体重，也可以使用下方快捷值'}}</text></view>
+    <view class="quick-weights"><view wx:for="{{quickWeights}}" wx:key="*this" class="quick-weight-btn tabular {{weight == item ? 'selected' : ''}}" bindtap="selectQuickWeight" data-weight="{{item}}">{{item}}</view></view>
+    <view class="weight-compare tabular" wx:if="{{showCompare}}">较上次 {{weightUp ? '+' : ''}}{{diffFormatted}} {{unitLabel}}</view>
+    <view class="note-input-area"><view class="row-between"><text class="small-label">给今天留句话</text><text class="small-label">{{note.length}}/30</text></view><input class="note-input" placeholder="例如：晨起空腹、晚饭后、运动后" value="{{note}}" bindinput="onNoteInput" maxlength="30" disabled="{{submitting}}"/></view>
+    <button class="btn-primary" bindtap="submitRecord" loading="{{submitting}}" disabled="{{!weight || weight <= 0 || submitting || statusLoading || loadError}}">{{submitting ? '保存中' : (isUpdate ? '保存修改' : '保存这次记录')}}</button>
   </view>
-
-  <canvas type="2d" id="shareCanvas" style="width: 375px; height: 500px; position: fixed; left: -9999px; top: 0; z-index: -1;"></canvas>
+  <view class="record-tip"><text class="eyebrow">小小的记录习惯</text><text>尽量在相近的时间、相似的条件下记录，让前后变化更容易比较。</text></view>
+  <view class="share-overlay" wx:if="{{showShareBtn}}"><view class="share-card"><view class="success-mark">✓</view><text class="share-title">已为你记下。</text><text class="share-weight fig-num">{{displayedWeight}} <text class="share-unit fig-unit">{{unitLabel}}</text></text><text class="share-date">{{currentDate}}</text><text class="share-msg">{{shareMsg}}</text><button class="btn-primary" bindtap="closeShare">完成，回到记录</button><button class="share-skip" open-type="share">分享这份坚持 ↗</button></view></view>
+  <canvas type="2d" id="shareCanvas" style="width:375px;height:500px;position:fixed;left:-9999px;top:0;z-index:-1;"></canvas>
 </view>

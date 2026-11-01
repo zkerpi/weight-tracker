@@ -1,3 +1,5 @@
 {
-  "navigationBarTitleText": "群组管理"
+  "navigationBarTitleText": "",
+  "navigationBarBackgroundColor": "#f0ede4",
+  "navigationBarTextStyle": "black"
 }

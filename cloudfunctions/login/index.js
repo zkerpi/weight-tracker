@@ -67,7 +67,9 @@ exports.main = async (event, context) => {
       }
 
       // 回填统计快照（首次登录后所有活跃用户自动补齐）
-      if (!user.stats) {
+      // lastDelta 是后加字段：老快照里没有这个键（值为 undefined），登录时顺带补齐一次，
+      // 否则小组动态里这些人与首页都会缺「较上次」。
+      if (!user.stats || user.stats.lastDelta === undefined) {
         user.stats = await shared.refreshUserStats(OPENID)
       }
     }

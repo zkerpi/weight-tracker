@@ -1,3 +1,6 @@
+// 图表里的体重数字与页面其它地方同一套衬线；横轴日期、纵轴刻度留在无衬线
+const NUM_FONT = '"Songti SC", "Noto Serif CJK SC", Georgia, serif'
+
 Component({
   properties: {
     data: {
@@ -20,6 +23,19 @@ Component({
       type: String,
       value: 'lose'
     },
+    compact: {
+      type: Boolean,
+      value: false
+    },
+    // 显式高度（rpx）：不传则沿用 wxss 里的默认高度
+    height: {
+      type: Number,
+      value: 0,
+      observer() {
+        this._ctx = null
+        setTimeout(() => this.drawChart(), 50)
+      }
+    },
   },
 
   lifetimes: {
@@ -36,7 +52,11 @@ Component({
       const chartData = this.properties.data || []
       const goalWeight = this.properties.goalWeight
 
-      if (chartData.length === 0) return
+      if (chartData.length === 0) {
+        if (this._ctx) this._ctx.clearRect(0, 0, this._canvasWidth, this._canvasHeight)
+        this._points = []
+        return
+      }
 
       if (this._ctx) {
         this.renderChart(this._ctx, chartData, goalWeight, this._canvasWidth, this._canvasHeight)
@@ -63,7 +83,12 @@ Component({
     },
 
     renderChart(ctx, data, goalWeight, w, h) {
-      const padding = { top: 20, right: 20, bottom: 40, left: 50 }
+      ctx.clearRect(0, 0, w, h)
+      this._points = []
+      const compact = this.properties.compact
+      const padding = compact
+        ? { top: 18, right: 12, bottom: 16, left: 12 }
+        : { top: 20, right: 20, bottom: 40, left: 50 }
       const goalType = this.properties.goalType || 'lose'
       const chartW = w - padding.left - padding.right
       const chartH = h - padding.top - padding.bottom
@@ -74,16 +99,17 @@ Component({
       if (validPoints.length < 2) {
         // 不足两个有效点，只画一个标记
         if (validPoints.length === 1) {
-          const x = padding.left + chartW / 2
+          const index = data.findIndex(d => d.weight != null)
+          const x = padding.left + chartW * index / Math.max(1, data.length - 1)
           const y = padding.top + chartH / 2
-          ctx.fillStyle = '#10b981'
+          ctx.fillStyle = '#2f4b39'
           ctx.beginPath()
           ctx.arc(x, y, 6, 0, Math.PI * 2)
           ctx.fill()
-          ctx.fillStyle = '#64748b'
-          ctx.font = '12px sans-serif'
+          ctx.fillStyle = '#8a9086'
+          ctx.font = 'bold 13px ' + NUM_FONT
           ctx.textAlign = 'center'
-          ctx.fillText(validPoints[0].weight + ' ' + this.properties.unitLabel, x, y + 30)
+          ctx.fillText(validPoints[0].weight + ' ' + this.properties.unitLabel, Math.min(w - 45, Math.max(45, x)), y + 30)
         }
         return
       }
@@ -105,9 +131,9 @@ Component({
       ctx.clearRect(0, 0, w, h)
 
       // 绘制网格线
-      ctx.strokeStyle = '#f1f5f9'
+      ctx.strokeStyle = '#e8e4d7'
       ctx.lineWidth = 1
-      const gridLines = 4
+      const gridLines = (compact || h < 240) ? 2 : 4
       for (let i = 0; i <= gridLines; i++) {
         const y = padding.top + (chartH / gridLines) * i
         ctx.beginPath()
@@ -116,11 +142,13 @@ Component({
         ctx.stroke()
 
         // Y轴标签
-        const val = yMax - (yRange / gridLines) * i
-        ctx.fillStyle = '#94a3b8'
-        ctx.font = '11px sans-serif'
-        ctx.textAlign = 'right'
-        ctx.fillText(val.toFixed(1), padding.left - 8, y + 7)
+        if (!compact) {
+          const val = yMax - (yRange / gridLines) * i
+          ctx.fillStyle = '#a9afa4'
+          ctx.font = '11px sans-serif'
+          ctx.textAlign = 'right'
+          ctx.fillText(val.toFixed(1), padding.left - 8, y + 7)
+        }
       }
 
       // X轴标签（取等间隔的几个点）
@@ -128,28 +156,30 @@ Component({
       const labelStep = Math.max(1, Math.floor(data.length / labelCount))
       const xStep = chartW / (data.length - 1 || 1)
 
-      ctx.fillStyle = '#94a3b8'
+      ctx.fillStyle = '#a9afa4'
       ctx.font = '11px sans-serif'
       ctx.textAlign = 'center'
 
-      for (let i = 0; i < data.length; i += labelStep) {
+      for (let i = 0; !compact && i < data.length; i += labelStep) {
         const dateStr = data[i].date || ''
-        const label = dateStr.length >= 10 ? dateStr.slice(5) : dateStr
+        // 设计稿横轴为「4/18」这类短格式
+        const parts = dateStr.length >= 10 ? dateStr.slice(5).split('-') : []
+        const label = parts.length === 2 ? `${Number(parts[0])}/${Number(parts[1])}` : dateStr
         const x = padding.left + i * xStep
         ctx.fillText(label, x, padding.top + chartH + 28)
       }
 
       // 绘制目标线
-      if (goalWeight && goalWeight >= yMin && goalWeight <= yMax) {
+      if (!compact && goalWeight && goalWeight >= yMin && goalWeight <= yMax) {
         const goalY = padding.top + chartH - ((goalWeight - yMin) / yRange) * chartH
 
         // 增重模式：目标以上的区域用绿色半透明标出"已达标"
         if (goalType === 'gain') {
-          ctx.fillStyle = 'rgba(16, 185, 129, 0.08)'
+          ctx.fillStyle = 'rgba(47, 75, 57, 0.07)'
           ctx.fillRect(padding.left, padding.top, chartW, goalY - padding.top)
         }
 
-        ctx.strokeStyle = '#f59e0b'
+        ctx.strokeStyle = '#c79064'
         ctx.lineWidth = 2
         ctx.setLineDash([6, 4])
         ctx.beginPath()
@@ -158,7 +188,7 @@ Component({
         ctx.stroke()
         ctx.setLineDash([])
 
-        ctx.fillStyle = '#f59e0b'
+        ctx.fillStyle = '#c79064'
         ctx.font = '11px sans-serif'
         ctx.textAlign = 'left'
         const goalLabel = goalType === 'gain' ? '目标增重' : '目标'
@@ -178,7 +208,7 @@ Component({
       this._points = points
 
       // 连接有效点
-      ctx.strokeStyle = '#10b981'
+      ctx.strokeStyle = '#2f4b39'
       ctx.lineWidth = 3
       ctx.lineJoin = 'round'
       ctx.lineCap = 'round'
@@ -193,8 +223,6 @@ Component({
           } else {
             ctx.lineTo(p.x, p.y)
           }
-        } else {
-          started = false
         }
       }
       ctx.stroke()
@@ -205,25 +233,25 @@ Component({
           // 外圈
           ctx.fillStyle = '#ffffff'
           ctx.beginPath()
-          ctx.arc(p.x, p.y, 6, 0, Math.PI * 2)
+          ctx.arc(p.x, p.y, compact ? 4 : 6, 0, Math.PI * 2)
           ctx.fill()
 
           // 内圈
-          ctx.fillStyle = '#10b981'
+          ctx.fillStyle = '#2f4b39'
           ctx.beginPath()
-          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2)
+          ctx.arc(p.x, p.y, compact ? 2.5 : 4, 0, Math.PI * 2)
           ctx.fill()
         }
       }
 
       // 标注选中点或最新体重
-      const selectedIdx = this._selectedIdx
+      const selectedIdx = compact ? -1 : this._selectedIdx
       if (selectedIdx >= 0 && selectedIdx < points.length && points[selectedIdx] && points[selectedIdx].y !== null) {
         const sp = points[selectedIdx]
 
         // 虚线指示线
         ctx.save()
-        ctx.strokeStyle = 'rgba(16, 185, 129, 0.25)'
+        ctx.strokeStyle = 'rgba(47, 75, 57, 0.22)'
         ctx.lineWidth = 1
         ctx.setLineDash([4, 4])
         ctx.beginPath()
@@ -233,13 +261,13 @@ Component({
         ctx.restore()
 
         // 外圈光晕
-        ctx.fillStyle = 'rgba(16, 185, 129, 0.1)'
+        ctx.fillStyle = 'rgba(47, 75, 57, 0.1)'
         ctx.beginPath()
         ctx.arc(sp.x, sp.y, 12, 0, Math.PI * 2)
         ctx.fill()
 
         // 选中圆点
-        ctx.fillStyle = '#10b981'
+        ctx.fillStyle = '#2f4b39'
         ctx.beginPath()
         ctx.arc(sp.x, sp.y, 7, 0, Math.PI * 2)
         ctx.fill()
@@ -249,22 +277,23 @@ Component({
         ctx.fill()
 
         // 体重标签
-        ctx.fillStyle = '#10b981'
-        ctx.font = 'bold 12px sans-serif'
+        ctx.fillStyle = '#2f4b39'
+        ctx.font = 'bold 13px ' + NUM_FONT
         ctx.textAlign = 'center'
-        ctx.fillText(sp.weight + ' ' + this.properties.unitLabel, sp.x, sp.y - 22)
+        ctx.fillText(sp.weight + ' ' + this.properties.unitLabel, Math.min(w - 42, Math.max(42, sp.x)), sp.y - 22)
       } else {
-        const latest = points[points.length - 1]
-        if (latest && latest.y !== null) {
+        const latest = points.filter(p => p.y !== null).slice(-1)[0]
+        if (latest && latest.y !== null && !compact) {
           ctx.fillStyle = '#1e293b'
-          ctx.font = 'bold 11px sans-serif'
+          ctx.font = 'bold 12px ' + NUM_FONT
           ctx.textAlign = 'center'
-          ctx.fillText(latest.weight + ' ' + this.properties.unitLabel, latest.x, latest.y - 16)
+          ctx.fillText(latest.weight + ' ' + this.properties.unitLabel, Math.min(w - 42, Math.max(42, latest.x)), latest.y - 16)
         }
       }
     },
 
     onTouchStart(e) {
+      if (this.properties.compact) return
       if (!this._points || this._points.length === 0) return
       const query = this.createSelectorQuery()
       query.select('#trendCanvas').boundingClientRect()
@@ -289,7 +318,7 @@ Component({
       if (!rect) return
       const touch = e.changedTouches && e.changedTouches[0]
       if (!touch) return
-      const tapX = touch.pageX - rect.left
+      const tapX = touch.clientX - rect.left
 
       // 找X轴最近的有效点（手指滑过时按X坐标定位）
       let minDist = Infinity

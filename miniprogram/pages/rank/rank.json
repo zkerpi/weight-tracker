@@ -1,3 +1,7 @@
 {
-  "navigationBarTitleText": "排行榜"
+  "navigationBarTitleText": "",
+  "navigationBarBackgroundColor": "#f0ede4",
+  "navigationBarTextStyle": "black",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
 }

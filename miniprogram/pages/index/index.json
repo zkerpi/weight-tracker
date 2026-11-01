@@ -1,5 +1,9 @@
 {
   "usingComponents": {
     "trend-chart": "/components/trend-chart/trend-chart"
-  }
+  },
+  "navigationBarTitleText": "",
+  "navigationBarBackgroundColor": "#f0ede4",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
 }

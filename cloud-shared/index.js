@@ -4,11 +4,7 @@
 const cloud = require('wx-server-sdk')
 
 function getToday() {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)
 }
 
 function getYesterday(dateStr) {
@@ -26,11 +22,16 @@ async function computeStats(openId) {
   const [countRes, firstRes, recentRes] = await Promise.all([
     db.collection('records').where({ openId }).count(),
     db.collection('records').where({ openId }).orderBy('date', 'asc').limit(1).get(),
-    db.collection('records').where({ openId }).orderBy('date', 'desc').limit(400).get()
+    db.collection('records').where({ openId }).orderBy('date', 'desc').limit(100).get()
   ])
 
   const first = firstRes.data[0] || null
   const recent = recentRes.data || []
+  while (recent.length > 0 && recent.length % 100 === 0) {
+    const res = await db.collection('records').where({ openId, date: db.command.lt(recent[recent.length - 1].date) }).orderBy('date', 'desc').limit(100).get()
+    recent.push(...res.data)
+    if (res.data.length < 100) break
+  }
   const today = getToday()
 
   // 连续打卡：从最新记录日期往前数；最新记录早于昨天则已断档记 0。
@@ -54,6 +55,8 @@ async function computeStats(openId) {
     firstDate: first ? first.date : null,
     currentWeight: recent.length > 0 ? recent[0].weight : null,
     latestDate: recent.length > 0 ? recent[0].date : null,
+    // 较上次：最近两条记录之差（列表里显示涨跌用），只有一条记录时为 null
+    lastDelta: recent.length > 1 ? Number((recent[0].weight - recent[1].weight).toFixed(1)) : null,
     totalDays: countRes.total,
     streak
   }

@@ -1,3 +1,5 @@
 {
-  "navigationBarTitleText": "记录体重"
+  "navigationBarTitleText": "",
+  "navigationBarBackgroundColor": "#f0ede4",
+  "navigationBarTextStyle": "black"
 }

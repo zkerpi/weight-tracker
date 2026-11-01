@@ -34,14 +34,19 @@ App({
   // 确保 userInfo 可用：有 stats 快照且非强制刷新则直接返回，否则调 login
   async ensureUser(force, loadingTitle) {
     const u = this.globalData.userInfo
-    if (!force && u && u.stats) return u
+    if (!force && !this.globalData.needsRefresh && u && u.stats && this._userDate === new Date().toLocaleDateString()) return u
     if (loadingTitle) wx.showLoading({ title: loadingTitle, mask: true })
     try {
       const res = await wx.cloud.callFunction({ name: 'login', data: {} })
       if (res.result && res.result.code === 0) {
         this.setUserInfo(res.result.data)
+        this._userDate = new Date().toLocaleDateString()
+        this.globalData.needsRefresh = false
         return res.result.data
       }
+      return null
+    } catch (err) {
+      console.error('加载用户失败', err)
       return null
     } finally {
       if (loadingTitle) wx.hideLoading()

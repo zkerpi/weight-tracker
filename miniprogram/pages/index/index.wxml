@@ -1,59 +1,68 @@
-<view class="page">
-  <!-- 今日体重 -->
-  <view class="card weight-card">
-    <view class="card-row">
-      <text class="section-title">今日体重</text>
-      <view class="date-badge">{{todayDate}}</view>
+<view class="page home-page">
+  <view class="page-head home-head">
+    <view class="page-head-copy">
+      <text class="display-title">今天</text>
+      <text class="page-tagline">更轻一点，也更轻的自己</text>
     </view>
-    <view class="weight-display" wx:if="{{todayWeight}}">
-      <text class="weight-number">{{todayWeight}}</text>
-      <text class="weight-unit">{{unitLabel}}</text>
+    <text class="home-date">{{dateLabel}}</text>
+  </view>
+
+  <view wx:if="{{error}}" class="notice" bindtap="loadData">{{error}} · 重试</view>
+  <view wx:elif="{{loading && !userInfo}}" class="empty-state">正在加载记录…</view>
+  <block wx:else>
+    <!-- 圆环：白天是太阳（外圈光芒），夜里是月亮（冷光 + 星点） -->
+    <view class="weight-stage">
+      <view class="weight-ring {{isDay ? 'is-day' : 'is-night'}}">
+        <view class="ring-rays" wx:if="{{isDay}}">
+          <view class="ray" wx:for="{{rays}}" wx:key="*this" style="transform:rotate({{item}}deg)"></view>
+        </view>
+        <view class="ring-stars" wx:else>
+          <view class="ring-moon"></view>
+          <view class="star" wx:for="{{stars}}" wx:key="id"
+                style="left:{{item.x}}rpx;top:{{item.y}}rpx;width:{{item.s}}rpx;height:{{item.s}}rpx;opacity:{{item.o}}"></view>
+        </view>
+
+        <text class="ring-caption">{{todayWeight ? '今日体重' : '当前体重'}}</text>
+        <view class="ring-figure" style="font-size:{{numSize}}rpx">
+          <text class="ring-number fig-num">{{currentWeight}}</text>
+          <text class="ring-unit fig-unit">{{unitLabel}}</text>
+        </view>
+        <view wx:if="{{lastDeltaText}}" class="ring-chip {{lastDeltaDir}}">{{lastDeltaText}}</view>
+      </view>
+
+      <view wx:if="{{!lastDeltaText}}" class="ring-hint">记下第一次测量，就会有对比</view>
     </view>
-    <view class="weight-empty" wx:else>
-      <text class="weight-empty-text">今天还没打卡</text>
-    </view>
-    <button class="btn-primary" bindtap="goRecord">
-      <text wx:if="{{todayWeight}}">修改记录</text>
-      <text wx:else>开始打卡</text>
+
+    <button class="primary-pill" bindtap="goRecord">
+      <view class="pill-plus">＋</view>
+      <text class="pill-label">{{todayWeight ? '修改今天的体重' : '记录今天的体重'}}</text>
     </button>
-  </view>
 
-  <!-- 统计卡片 -->
-  <view class="card">
-    <view class="stats-row">
-      <view class="stats-col">
-        <text class="stats-num {{totalChange >= 0 ? 'text-primary' : 'text-danger'}}">{{changeDisplay || '-'}}<text class="stats-unit">{{unitLabel}}</text></text>
-        <text class="stats-label">{{goalType === 'gain' ? '已增' : '已减'}}</text>
+    <view class="panel">
+      <view class="panel-head">
+        <text class="panel-title">本周打卡</text>
+        <text class="panel-side tabular">{{weekCount || 0}} / 7 天</text>
       </view>
-      <view class="stats-col">
-        <text class="stats-num">{{streak || 0}} 天</text>
-        <text class="stats-label">连续打卡</text>
-      </view>
-      <view class="stats-col stats-col-clickable" bindtap="goHistory">
-        <text class="stats-num">{{totalDays || 0}} 天</text>
-        <text class="stats-label">共打卡 ›</text>
+      <view class="week-row">
+        <view wx:for="{{week}}" wx:key="date" class="week-cell" data-date="{{item.date}}" bindtap="goDay">
+          <text class="week-label {{item.today ? 'is-today' : ''}}">{{item.today ? '今天' : '周' + item.weekday}}</text>
+          <view class="week-dot {{item.done ? 'done' : ''}}"><text wx:if="{{item.done}}" class="week-tick">✓</text></view>
+        </view>
       </view>
     </view>
-  </view>
 
-  <!-- 趋势图 -->
-  <view class="card">
-    <view class="card-row">
-      <text class="section-title">体重趋势</text>
-      <picker mode="selector" range="{{chartRanges}}" value="{{chartRangeIndex}}" bindchange="onChartRangeChange">
-        <view class="picker-btn">{{chartRanges[chartRangeIndex]}} ▾</view>
-      </picker>
+    <view class="panel panel-muted">
+      <view class="panel-head">
+        <text class="panel-title">体重趋势</text>
+        <text class="panel-side" bindtap="goHistory">近 7 天 ›</text>
+      </view>
+      <view wx:if="{{chartLoading}}" class="chart-placeholder">正在加载趋势…</view>
+      <view wx:elif="{{chartError}}" class="chart-placeholder" bindtap="loadSummary">加载失败，点击重试</view>
+      <trend-chart wx:elif="{{trendPointCount >= 2}}" data="{{chartData}}" unitLabel="{{unitLabel}}" height="210"></trend-chart>
+      <view wx:else class="chart-placeholder">
+        <text class="chart-placeholder-title">{{trendPointCount === 1 ? '下一笔记录，让变化连起来' : '你的趋势，从第一笔记录开始'}}</text>
+        <text class="chart-placeholder-note">至少两次记录后显示曲线</text>
+      </view>
     </view>
-    <trend-chart
-      wx:if="{{chartData.length > 0}}"
-      data="{{chartData}}"
-      goalWeight="{{displayGoalWeight}}"
-      unitLabel="{{unitLabel}}"
-      goalType="{{goalType}}"
-    ></trend-chart>
-    <view class="empty-state" wx:else>
-      <text>暂无数据</text>
-      <text>开始打卡后将显示趋势图</text>
-    </view>
-  </view>
+  </block>
 </view>

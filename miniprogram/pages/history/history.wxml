@@ -1,4 +1,25 @@
 <view class="page">
+  <view class="page-head">
+    <view class="page-head-copy">
+      <text class="display-title">趋势</text>
+      <text class="page-tagline">用一段时间的变化，了解自己的节奏</text>
+    </view>
+  </view>
+  <view wx:if="{{error}}" class="notice" bindtap="retry">{{error}} ↗</view>
+  <view class="card history-trend">
+    <view class="section-head"><text class="section-title">体重趋势</text><text class="small-label">轻触图表查看记录</text></view>
+    <view class="range-tabs"><view wx:for="{{chartRanges}}" wx:key="*this" class="range-tab {{chartRangeIndex === index ? 'active' : ''}}" bindtap="onChartRangeChange" data-index="{{index}}">{{item}}</view></view>
+    <view class="period-stats" wx:if="{{!chartLoading && !chartError}}">
+      <view><text class="period-value fig-num">{{periodAverage}}</text><text class="period-label">区间均值 / {{unitLabel}}</text></view>
+      <view><text class="period-value fig-num">{{periodChange}}</text><text class="period-label">首末变化 / {{unitLabel}}</text></view>
+      <view><text class="period-value fig-num">{{periodCount || 0}}</text><text class="period-label">记录次数</text></view>
+    </view>
+    <view wx:if="{{chartError}}" class="empty-state" bindtap="loadChart">{{chartError}}</view>
+    <view wx:elif="{{chartLoading}}" class="empty-state">正在整理趋势…</view>
+    <trend-chart wx:elif="{{hasChartData}}" data="{{chartData}}" goalWeight="{{goalWeight}}" unitLabel="{{unitLabel}}" goalType="{{goalType}}"></trend-chart>
+    <view wx:else class="empty-state"><text>记录几次后，就能看到趋势</text></view>
+  </view>
+  <view class="history-list-heading row-between"><text class="section-title">记录明细</text><text class="text-link" bindtap="goRecord">补记 / 新增 ›</text></view>
   <!-- 骨架屏 -->
   <view wx:if="{{loading}}" class="skeleton-list">
     <view class="skeleton-item" wx:for="{{5}}" wx:key="*this">
@@ -11,38 +32,42 @@
   <block wx:else>
     <!-- 补签提醒 -->
     <view wx:if="{{gaps.length > 0}}" class="backfill-banner">
-      <text class="backfill-title">有 {{gaps.length}} 天未打卡</text>
+      <text class="backfill-title">最近有 {{gaps.length}} 天可以补记</text>
       <view class="backfill-list">
         <view class="backfill-item" wx:for="{{gaps}}" wx:key="*this" bindtap="goBackfill" data-date="{{item}}">
           <text class="backfill-date">{{item}}</text>
-          <text class="backfill-action">去补签 ›</text>
+          <text class="backfill-action">补记 ›</text>
         </view>
       </view>
     </view>
 
     <!-- 记录列表 -->
     <view wx:if="{{records.length > 0}}" class="history-list">
-      <view class="history-item" wx:for="{{records}}" wx:key="_id" data-id="{{item._id}}" data-date="{{item.date}}" bindlongpress="onDeleteRecord">
+      <view class="history-item" wx:for="{{records}}" wx:key="_id" data-id="{{item._id}}" data-date="{{item.date}}" bindtap="goBackfill">
         <view class="history-left">
           <text class="history-date">{{item.date}}</text>
           <text class="history-note" wx:if="{{item.note}}">{{item.note}}</text>
         </view>
         <view class="history-right">
-          <text class="history-weight">{{item.weight}} {{unitLabel}}</text>
-          <text class="history-diff {{item.diffUp ? 'diff-up' : ''}} {{item.diffDown ? 'diff-down' : ''}}">
+          <view class="history-weight fig-row">
+            <text class="fig-num">{{item.weight}}</text>
+            <text class="fig-unit">{{unitLabel}}</text>
+          </view>
+          <text class="history-diff tabular {{item.diffUp ? 'diff-up' : ''}} {{item.diffDown ? 'diff-down' : ''}}">
             {{item.diffFormatted}}
           </text>
+          <text class="delete-action" catchtap="onDeleteRecord" data-id="{{item._id}}" data-date="{{item.date}}">删除</text>
         </view>
       </view>
 
       <!-- 上拉加载更多 -->
-      <view class="load-more">{{loadingMore ? '加载中...' : (hasMore ? '上拉加载更多' : '— 没有更多了 —')}}</view>
+      <view class="load-more">{{loadingMore ? '加载中...' : (hasMore ? '上拉加载更多' : '已显示全部记录')}}</view>
     </view>
 
     <!-- 空状态 -->
     <view wx:if="{{records.length === 0}}" class="empty-state">
-      <text>暂无记录</text>
-      <text>开始打卡后将显示在这里</text>
+      <text>还没有留下记录</text>
+      <text>记下今天，未来回看时会感谢自己</text>
     </view>
   </block>
 </view>

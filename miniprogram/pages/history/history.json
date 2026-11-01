@@ -1,4 +1,8 @@
 {
-  "navigationBarTitleText": "体重记录",
-  "usingComponents": {}
+  "navigationBarTitleText": "",
+  "navigationBarBackgroundColor": "#f0ede4",
+  "navigationBarTextStyle": "black",
+  "usingComponents": {
+    "trend-chart": "/components/trend-chart/trend-chart"
+  }
 }

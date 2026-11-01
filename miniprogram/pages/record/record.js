@@ -3,6 +3,7 @@ const util = require('../../utils/util')
 Page({
   data: {
     weight: '',
+    weightW: 200,
     weightUnit: 'kg',
     unitLabel: 'kg',
     currentDate: util.getToday(),
@@ -21,7 +22,9 @@ Page({
     weightUp: false,
     weightDown: false,
     diffFormatted: '',
-    submitting: false
+    submitting: false,
+    statusLoading: true,
+    loadError: ''
   },
 
   onLoad(query) {
@@ -32,14 +35,15 @@ Page({
   },
 
   async loadUserStatus() {
+    const request = this._statusRequest = (this._statusRequest || 0) + 1
+    this.setData({ statusLoading: true, loadError: '' })
     util.showLoading()
     try {
       const app = getApp()
       const user = await app.ensureUser(false)
 
       if (!user) {
-        util.showError('获取用户信息失败')
-        return
+        throw new Error('获取用户信息失败')
       }
 
       this.setData({ userInfo: user })
@@ -56,6 +60,7 @@ Page({
         .limit(2)
         .get()
 
+      if (request !== this._statusRequest) return
       const records = recordsRes.data
       // 选中日期当天的记录（若存在）
       const todayRecord = records[0] && records[0].date === currentDate ? records[0] : null
@@ -64,7 +69,6 @@ Page({
       const lastWeightKg = lastRecord ? lastRecord.weight : null
 
       // 生成快捷体重选项（显示单位）
-      const goalWeight = user.goalWeight
       let quickWeights = []
       if (lastWeightKg) {
         const last = parseFloat(util.displayWeight(lastWeightKg, weightUnit))
@@ -73,15 +77,8 @@ Page({
           last.toFixed(1),
           (last + 0.5).toFixed(1)
         ]
-      } else if (goalWeight) {
-        const goal = parseFloat(util.displayWeight(goalWeight, weightUnit))
-        quickWeights = [
-          (goal + 2).toFixed(1),
-          (goal + 5).toFixed(1),
-          (goal + 8).toFixed(1)
-        ]
       } else {
-        quickWeights = weightUnit === 'jin' ? ['140.0', '150.0', '160.0'] : ['70.0', '75.0', '80.0']
+        quickWeights = []
       }
 
       this.setData({
@@ -91,13 +88,14 @@ Page({
         isUpdate: !!todayRecord,
         existingWeight: todayRecord ? util.displayWeight(todayRecord.weight, weightUnit) : null,
         weight: todayRecord ? util.displayWeight(todayRecord.weight, weightUnit) : '',
+        weightW: util.figureWidth(todayRecord ? util.displayWeight(todayRecord.weight, weightUnit) : '0.0', 88, 200),
         note: todayRecord ? (todayRecord.note || '') : '',
         lastWeight: lastWeightKg,
         showCompare: false,
         weightUp: false,
         weightDown: false,
         diffFormatted: '',
-        quickWeights
+        quickWeights: quickWeights.filter(w => Number(w) > 0)
       })
 
       // 修改模式下初始化对比
@@ -112,22 +110,23 @@ Page({
       }
     } catch (err) {
       console.error(err)
-      util.showError('加载失败')
+      if (request === this._statusRequest) this.setData({ loadError: '当天记录加载失败' })
     } finally {
+      if (request === this._statusRequest) this.setData({ statusLoading: false })
       util.hideLoading()
     }
   },
 
   onWeightInput(e) {
     const val = e.detail.value
-    this.setData({ weight: val })
+    this.setData({ weight: val, weightW: util.figureWidth(val || '0.0', 88, 200) })
     this._updateComparison(val)
   },
 
   _updateComparison(weightStr) {
     const parsed = parseFloat(weightStr)
     const lwKg = this.data.lastWeight
-    if (parsed && lwKg && this.data.isUpdate) {
+    if (parsed && lwKg) {
       const inputKg = util.toKg(parsed, this.data.weightUnit)
       const diff = inputKg - lwKg
       const displayDiff = this.data.weightUnit === 'jin' ? (diff * 2) : diff
@@ -155,14 +154,14 @@ Page({
 
   selectQuickWeight(e) {
     const val = e.currentTarget.dataset.weight
-    this.setData({ weight: val })
+    this.setData({ weight: val, weightW: util.figureWidth(val || '0.0', 88, 200) })
     this._updateComparison(val)
   },
 
   async submitRecord() {
-    if (this.data.submitting) return
+    if (this.data.submitting || this.data.statusLoading || this.data.loadError) return
     const weight = parseFloat(this.data.weight)
-    if (!weight || weight <= 0 || weight > 300) {
+    if (!/^\d+(\.\d{1,2})?$/.test(this.data.weight) || !Number.isFinite(weight) || weight <= 0 || util.toKg(weight, this.data.weightUnit) > 300) {
       util.showToast('请输入有效的体重值')
       return
     }
@@ -183,16 +182,13 @@ Page({
       if (res.result.code === 0) {
         // 标记首页和排名页下次需要刷新数据
         getApp().globalData.needsRefresh = true
-        getApp().cacheClear('ranking')
+        getApp().clearPageCaches()
 
         const displayedWeight = util.displayWeight(weightKg, this.data.weightUnit)
         const msgs = [
-          '持之以恒，终见成效',
-          '每一次打卡都是进步',
-          '坚持就是胜利',
-          '离目标又近了一步',
-          '自律的人最美丽',
-          '一步一个脚印',
+          '数字已经记下，接下来好好生活。',
+          '谢谢你，今天也在认真照顾自己。',
+          '每一笔记录，都让你更了解自己。',
         ]
         this.setData({
           showShareBtn: true,
@@ -216,7 +212,7 @@ Page({
 
   closeShare() {
     this.setData({ showShareBtn: false })
-    wx.navigateBack()
+    wx.navigateBack({ fail: () => wx.switchTab({ url: '/pages/index/index' }) })
   },
 
   async drawShareCard(weightKg) {
@@ -243,8 +239,8 @@ Page({
 
       // 背景
       const grad = ctx.createLinearGradient(0, 0, 0, h)
-      grad.addColorStop(0, '#10b981')
-      grad.addColorStop(1, '#059669')
+      grad.addColorStop(0, '#496850')
+      grad.addColorStop(1, '#253e35')
       ctx.fillStyle = grad
       ctx.fillRect(0, 0, w, h)
 

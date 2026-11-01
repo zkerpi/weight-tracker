@@ -1,0 +1,39 @@
+<view class="page groups-page">
+  <view class="page-head">
+    <view class="page-head-copy">
+      <text class="display-title long">我的小组</text>
+      <text class="page-tagline">你在几处，就记录几处</text>
+    </view>
+  </view>
+
+  <view wx:if="{{error}}" class="notice" bindtap="retry">{{error}}</view>
+
+  <view class="groups-list">
+    <view class="group-card {{currentGroupId === item._id ? 'is-current' : ''}}"
+          wx:for="{{groups}}" wx:key="_id" bindtap="enter" data-id="{{item._id}}">
+      <view class="group-card-head">
+        <text class="group-card-name">{{item.groupName}}</text>
+        <text class="group-card-flag" wx:if="{{currentGroupId === item._id}}">使用中</text>
+      </view>
+      <view class="group-card-meta">
+        <view class="group-card-members fig-row">
+          <text class="fig-num">{{item.memberCount}}</text>
+          <text class="fig-unit">位成员</text>
+        </view>
+        <text class="group-card-role">{{item.isCreator ? '我创建的小组' : '我是成员'}}</text>
+      </view>
+      <view class="group-card-foot">
+        <text class="group-card-code" catchtap="copyCode" data-code="{{item.inviteCode}}">邀请码 {{item.inviteCode}}</text>
+        <text class="group-card-enter">进入 ›</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{!loading && groups.length === 0}}" class="empty-state groups-empty">
+    <text class="groups-empty-title">还没有加入任何小组</text>
+    <text class="groups-empty-note">自己建一个，或用邀请码加入伙伴的小组</text>
+  </view>
+
+  <button class="btn-outline groups-add" bindtap="goCreate">创建或加入新的小组</button>
+  <text class="groups-note">一个账号可以同时在多个小组里。切到哪个小组，动态和排行就显示哪个；体重记录始终是同一份，不会因为换小组而重记。</text>
+</view>

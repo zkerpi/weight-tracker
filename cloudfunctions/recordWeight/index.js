@@ -8,8 +8,9 @@ exports.main = async (event, context) => {
   const { weight, date, note } = event
 
   if (!OPENID) return { code: -1, msg: '获取用户身份失败' }
-  if (!weight || weight <= 0) return { code: -1, msg: '体重数据无效' }
-  if (!date) return { code: -1, msg: '日期缺失' }
+  if (typeof weight !== 'number' || !Number.isFinite(weight) || weight <= 0 || weight > 300) return { code: -1, msg: '体重数据无效' }
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date || date > shared.getToday()) return { code: -1, msg: '请选择有效日期，不能记录未来日期' }
+  if (note != null && (typeof note !== 'string' || note.length > 30)) return { code: -1, msg: '备注最多30字' }
 
   try {
     // 查找当天是否已有记录

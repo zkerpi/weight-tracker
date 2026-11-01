@@ -1,2 +1,10 @@
 # 云函数共享模块同步副本（源在 cloudfunctions/_shared/，用 node scripts/sync-shared.js 生成）
 cloudfunctions/*/shared/
+
+# 本地预览产物：scripts/render-all.js 生成的渲染页与截图，随时可重生成，不入库
+preview/
+
+# 本地工作记录与本机配置
+.workbuddy/
+.DS_Store
+Thumbs.db

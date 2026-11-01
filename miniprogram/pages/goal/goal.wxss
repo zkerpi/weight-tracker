@@ -1,0 +1,67 @@
+/* 目标体重 —— 进度视图 + 一个大数字输入，不再重复放单位开关
+   数字层级：完成度（56）> 起点/目标（44）> 输入框（80，输入时才是主角） */
+
+.goal-page { padding:12rpx 40rpx calc(60rpx + env(safe-area-inset-bottom)); }
+
+/* 进度卡 */
+.goal-progress {
+  margin-top:26rpx; padding:26rpx 28rpx;
+  border:1rpx solid var(--line); border-radius:26rpx; background:#f8f6ee;
+}
+.goal-progress-top { display:flex; align-items:flex-end; justify-content:space-between; }
+.goal-progress-side { display:flex; flex-direction:column; }
+.goal-progress-side.right { align-items:flex-end; }
+.goal-progress-label { color:var(--muted); font-size:20rpx; letter-spacing:1rpx; }
+.goal-progress-num { margin-top:6rpx; font-size:44rpx; }
+.goal-progress-center { display:flex; flex-direction:column; align-items:center; }
+/* % 用嵌套 text 跟着数字基线走，不用 flex 对齐——flex 基线会把 % 顶成上标 */
+.goal-progress-percent { font-size:56rpx; color:var(--primary); }
+.goal-progress-pct { font-size:.40em; font-weight:700; }
+.goal-progress-hint { margin-top:8rpx; color:var(--muted); font-size:19rpx; letter-spacing:1rpx; }
+
+.goal-track { height:12rpx; margin-top:22rpx; overflow:hidden; border-radius:999rpx; background:#e6e1d2; }
+.goal-track-fill { height:100%; border-radius:999rpx; background:var(--primary); }
+
+.goal-progress-foot { display:flex; margin-top:14rpx; align-items:center; justify-content:space-between; }
+.goal-progress-current { color:var(--text); font-size:21rpx; }
+.goal-progress-caption { color:var(--muted); font-size:21rpx; }
+
+/* 未设目标：起点 / 现在 */
+.goal-baseline {
+  display:flex; margin-top:26rpx; padding:24rpx 28rpx; align-items:center;
+  border:1rpx solid var(--line); border-radius:26rpx; background:#f8f6ee;
+}
+.goal-baseline-item { flex:1; font-size:40rpx; }
+.goal-baseline-label { margin-right:12rpx; color:var(--muted); font-size:20rpx; }
+.goal-baseline-unit { margin-left:.14em; font-size:20rpx; }
+.goal-baseline-split { width:1rpx; height:40rpx; margin:0 20rpx; background:#e3ddcd; }
+
+/* 表单卡 */
+.goal-card {
+  margin-top:22rpx; padding:26rpx 28rpx 30rpx;
+  border:1rpx solid var(--line); border-radius:26rpx; background:var(--surface);
+}
+.goal-field-label { display:block; color:var(--muted); font-size:21rpx; letter-spacing:1rpx; }
+.goal-field-label + .goal-segmented,
+.goal-segmented + .goal-field-label { margin-top:22rpx; }
+
+.goal-segmented { display:flex; height:80rpx; margin-top:12rpx; padding:5rpx; border-radius:999rpx; background:#e9e6db; }
+.goal-segment {
+  display:flex; flex:1; align-items:center; justify-content:center;
+  border-radius:999rpx; color:#6f766e; font-size:26rpx;
+}
+.goal-segment.active { background:var(--primary); color:#fff; font-weight:600; }
+
+/* 输入行：容器给字号，input 与单位都按 em 走，换字体不会错位；
+   宽度由 util.figureWidth() 按字数算，单位才能紧贴数字 */
+.goal-input-row { margin-top:10rpx; padding:12rpx 0 16rpx; border-bottom:1rpx solid #e7e2d3; font-size:80rpx; }
+.goal-input {
+  flex:0 0 auto; height:1.2em; padding:0;
+  color:var(--text); font-size:1em; line-height:1.2;
+}
+.goal-input-holder { color:#cdc7b6; }
+.goal-input-unit { margin-left:.10em; color:var(--text-soft); font-size:.30em; }
+.goal-diff { display:block; margin-top:14rpx; color:var(--muted); font-size:21rpx; line-height:1.6; }
+.goal-save { margin-top:28rpx; }
+
+.goal-note { display:block; margin-top:20rpx; color:var(--faint); font-size:20rpx; line-height:1.7; }

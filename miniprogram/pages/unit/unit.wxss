@@ -1,0 +1,40 @@
+/* 体重单位 —— 选项式，而不是把单位塞进目标表单里
+   预览数字（64）与选项样例数字（36）同一套 fig 字体，只是字号分主次 */
+
+.unit-page { padding:12rpx 40rpx calc(60rpx + env(safe-area-inset-bottom)); }
+
+/* 当前体重预览 */
+.unit-preview {
+  display:flex; margin-top:26rpx; padding:24rpx 28rpx; flex-direction:column;
+  border:1rpx solid var(--line); border-radius:24rpx; background:#f8f6ee;
+}
+.unit-preview-label { color:var(--muted); font-size:21rpx; letter-spacing:1rpx; }
+.unit-preview-figure { margin-top:10rpx; font-size:64rpx; }
+.unit-preview-unit { font-size:24rpx; }
+
+/* 选项 */
+.unit-options { display:flex; margin-top:22rpx; flex-direction:column; }
+.unit-option {
+  margin-bottom:16rpx; padding:26rpx 28rpx;
+  border:1rpx solid var(--line); border-radius:24rpx; background:var(--surface);
+}
+.unit-option.active { border-color:var(--primary); background:#eef2ea; }
+.unit-option-main { display:flex; align-items:flex-start; justify-content:space-between; }
+.unit-option-copy { display:flex; flex:1; min-width:0; flex-direction:column; }
+.unit-option-title-line { display:flex; align-items:baseline; }
+.unit-option-name { color:var(--text); font-size:30rpx; font-weight:650; }
+.unit-option-code { margin-left:10rpx; color:var(--muted); font-size:20rpx; }
+.unit-option-desc { margin-top:4rpx; color:var(--muted); font-size:21rpx; line-height:1.5; }
+
+.unit-radio {
+  display:flex; width:44rpx; height:44rpx; margin-left:18rpx; flex-shrink:0;
+  align-items:center; justify-content:center; border:1rpx solid #d9d3c3; border-radius:50%;
+  background:#fff;
+}
+.unit-radio.checked { border-color:var(--primary); background:var(--primary); }
+.unit-radio-dot { color:#fff; font-size:22rpx; line-height:1; }
+
+/* 样例数字：和预览同一套字体，字号降到 36rpx，作为「这个单位长什么样」的证据 */
+.unit-sample { margin-top:18rpx; padding-top:16rpx; border-top:1rpx solid #f0ece0; font-size:36rpx; }
+
+.unit-note { display:block; margin-top:18rpx; color:var(--faint); font-size:20rpx; line-height:1.7; }
