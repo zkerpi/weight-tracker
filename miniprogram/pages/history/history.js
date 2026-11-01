@@ -9,6 +9,7 @@ const RANGE_DAYS = [7, 14, 30, 90, 365]
 Page({
   data: {
     records: [],
+    groups: [],
     loading: true,
     gaps: [],
     hasMore: true,
@@ -114,7 +115,7 @@ Page({
       const records = this._formatRecords(rawRecords, weightUnit)
       const hasMore = res.data.length === PAGE_SIZE
 
-      const patch = { records, hasMore, loadingMore: false, loading: false, unitLabel }
+      const patch = { records, groups: this._groupRecords(records), hasMore, loadingMore: false, loading: false, unitLabel }
       patch.error = ''
       if (reset) patch.gaps = this._computeGaps(records)
       this.setData(patch)
@@ -128,21 +129,44 @@ Page({
   },
 
   _formatRecords(rawRecords, weightUnit) {
+    const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
     return rawRecords.map((r, i, arr) => {
       const prev = arr[i + 1]
       const diff = prev ? r.weight - prev.weight : 0
       const displayDiff = weightUnit === 'jin' ? (diff * 2) : diff
+      // 最早一条没有可比对象，留空而不是写「起始记录 / 暂无对比」——那串字每行都出现就成噪音。
+      // 涨跌符号与小组动态统一用 ▲/▼，全站看到的是同一种语言。
+      const formatted = !prev ? '' : diff === 0 ? '持平'
+        : (displayDiff > 0 ? '▲ ' : '▼ ') + Math.abs(displayDiff).toFixed(1)
       return {
         _id: r._id,
         date: r.date,
+        day: r.date.slice(8),
+        week: WEEK[new Date(r.date).getDay()],
+        monthKey: r.date.slice(0, 7),
         weight: util.displayWeight(r.weight, weightUnit),
         rawWeight: r.weight,
         note: r.note || '',
-        diffFormatted: !prev ? '起始记录 / 暂无对比' : diff === 0 ? '持平' : (displayDiff > 0 ? '+' + displayDiff.toFixed(1) : displayDiff.toFixed(1)),
+        diffFormatted: formatted,
         diffUp: diff > 0,
         diffDown: diff < 0
       }
     })
+  },
+
+  // 按月分段：列表里原来每条都顶着完整日期（2026-11-01），年月重复 N 遍；
+  // 月份提到段首，行里只留「日」，一屏能多读两条，也不再是一片数字。
+  _groupRecords(records) {
+    const groups = []
+    let cur = null
+    records.forEach(r => {
+      if (!cur || cur.key !== r.monthKey) {
+        cur = { key: r.monthKey, label: Number(r.monthKey.slice(5)) + ' 月', items: [] }
+        groups.push(cur)
+      }
+      cur.items.push(Object.assign({ first: cur.items.length === 0 }, r))
+    })
+    return groups
   },
 
   // 最近7天补签缺口（最多3个），仅首屏计算
@@ -159,7 +183,7 @@ Page({
       if (dateStr >= today) continue // 今天不补
       const exists = records.some(r => r.date === dateStr)
       if (!exists) {
-        gaps.push(dateStr)
+        gaps.push({ date: dateStr, label: dateStr.slice(5) })
         if (gaps.length >= 3) break
       }
     }

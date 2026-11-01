@@ -5,69 +5,86 @@
       <text class="page-tagline">用一段时间的变化，了解自己的节奏</text>
     </view>
   </view>
+
   <view wx:if="{{error}}" class="notice" bindtap="retry">{{error}} ↗</view>
-  <view class="card history-trend">
-    <view class="section-head"><text class="section-title">体重趋势</text><text class="small-label">轻触图表查看记录</text></view>
-    <view class="range-tabs"><view wx:for="{{chartRanges}}" wx:key="*this" class="range-tab {{chartRangeIndex === index ? 'active' : ''}}" bindtap="onChartRangeChange" data-index="{{index}}">{{item}}</view></view>
-    <view class="period-stats" wx:if="{{!chartLoading && !chartError}}">
-      <view><text class="period-value fig-num">{{periodAverage}}</text><text class="period-label">区间均值 / {{unitLabel}}</text></view>
-      <view><text class="period-value fig-num">{{periodChange}}</text><text class="period-label">首末变化 / {{unitLabel}}</text></view>
-      <view><text class="period-value fig-num">{{periodCount || 0}}</text><text class="period-label">记录次数</text></view>
+
+  <!-- 趋势：卡片里只留三样——区间、曲线、一行注脚。
+       原来还有「体重趋势」小标题 + 五个带底的胶囊 + 三个 40rpx 大数字 + 提示语，
+       一屏里五个视觉焦点互相争，挤。 -->
+  <view class="card trend-card">
+    <view class="range-tabs">
+      <view wx:for="{{chartRanges}}" wx:key="*this"
+            class="range-tab {{chartRangeIndex === index ? 'active' : ''}}"
+            bindtap="onChartRangeChange" data-index="{{index}}">{{item}}</view>
     </view>
-    <view wx:if="{{chartError}}" class="empty-state" bindtap="loadChart">{{chartError}}</view>
-    <view wx:elif="{{chartLoading}}" class="empty-state">正在整理趋势…</view>
-    <trend-chart wx:elif="{{hasChartData}}" data="{{chartData}}" goalWeight="{{goalWeight}}" unitLabel="{{unitLabel}}" goalType="{{goalType}}"></trend-chart>
-    <view wx:else class="empty-state"><text>记录几次后，就能看到趋势</text></view>
+    <view wx:if="{{chartError}}" class="trend-empty" bindtap="loadChart">{{chartError}}</view>
+    <view wx:elif="{{chartLoading}}" class="trend-empty">正在整理趋势…</view>
+    <trend-chart wx:elif="{{hasChartData}}" data="{{chartData}}" goalWeight="{{goalWeight}}"
+                 unitLabel="{{unitLabel}}" goalType="{{goalType}}" height="300"></trend-chart>
+    <view wx:else class="trend-empty">记录两次以后，曲线才会出现</view>
+    <view class="trend-note tabular" wx:if="{{!chartLoading && !chartError}}">
+      <text>均值 <text class="fig-inline">{{periodAverage}}</text> {{unitLabel}}</text>
+      <text class="trend-note-dot">·</text>
+      <text>首末 <text class="fig-inline">{{periodChange}}</text></text>
+      <text class="trend-note-dot">·</text>
+      <text>{{periodCount || 0}} 次记录</text>
+    </view>
   </view>
-  <view class="history-list-heading row-between"><text class="section-title">记录明细</text><text class="text-link" bindtap="goRecord">补记 / 新增 ›</text></view>
+
+  <view class="list-head">
+    <text class="section-title">记录明细</text>
+    <text class="text-link" bindtap="goRecord">补记 / 新增 ›</text>
+  </view>
+
+  <!-- 补签：原来是一块带标题和列表的横幅，占掉整屏的 1/6；
+       改成一行，日期做成可点的小块 -->
+  <view wx:if="{{gaps.length > 0}}" class="gap-line">
+    <text class="gap-label">可补记</text>
+    <view class="gap-chips">
+      <text class="gap-chip" wx:for="{{gaps}}" wx:key="date"
+            bindtap="goBackfill" data-date="{{item.date}}">{{item.label}}</text>
+    </view>
+  </view>
+
   <!-- 骨架屏 -->
-  <view wx:if="{{loading}}" class="skeleton-list">
-    <view class="skeleton-item" wx:for="{{5}}" wx:key="*this">
-      <view class="skeleton-line skeleton-date"></view>
+  <view wx:if="{{loading}}" class="rec-card">
+    <view class="skeleton-row" wx:for="{{5}}" wx:key="*this">
+      <view class="skeleton-line skeleton-day"></view>
+      <view class="skeleton-line skeleton-note"></view>
       <view class="skeleton-line skeleton-weight"></view>
-      <view class="skeleton-line skeleton-change"></view>
     </view>
   </view>
 
   <block wx:else>
-    <!-- 补签提醒 -->
-    <view wx:if="{{gaps.length > 0}}" class="backfill-banner">
-      <text class="backfill-title">最近有 {{gaps.length}} 天可以补记</text>
-      <view class="backfill-list">
-        <view class="backfill-item" wx:for="{{gaps}}" wx:key="*this" bindtap="goBackfill" data-date="{{item}}">
-          <text class="backfill-date">{{item}}</text>
-          <text class="backfill-action">补记 ›</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 记录列表 -->
-    <view wx:if="{{records.length > 0}}" class="history-list">
-      <view class="history-item" wx:for="{{records}}" wx:key="_id" data-id="{{item._id}}" data-date="{{item.date}}" bindtap="goBackfill">
-        <view class="history-left">
-          <text class="history-date">{{item.date}}</text>
-          <text class="history-note" wx:if="{{item.note}}">{{item.note}}</text>
-        </view>
-        <view class="history-right">
-          <view class="history-weight fig-row">
-            <text class="fig-num">{{item.weight}}</text>
-            <text class="fig-unit">{{unitLabel}}</text>
+    <view wx:if="{{groups.length > 0}}" class="rec-card">
+      <block wx:for="{{groups}}" wx:key="key" wx:for-item="group">
+        <view class="rec-month {{index > 0 ? 'is-after' : ''}}">{{group.label}}</view>
+        <view class="rec-row {{rec.first ? 'is-first' : ''}}" wx:for="{{group.items}}" wx:key="_id" wx:for-item="rec"
+              data-id="{{rec._id}}" data-date="{{rec.date}}"
+              bindtap="goBackfill" bindlongpress="onDeleteRecord">
+          <view class="rec-day">
+            <text class="rec-day-num tabular">{{rec.day}}</text>
+            <text class="rec-week">{{rec.week}}</text>
           </view>
-          <text class="history-diff tabular {{item.diffUp ? 'diff-up' : ''}} {{item.diffDown ? 'diff-down' : ''}}">
-            {{item.diffFormatted}}
-          </text>
-          <text class="delete-action" catchtap="onDeleteRecord" data-id="{{item._id}}" data-date="{{item.date}}">删除</text>
+          <text class="rec-note">{{rec.note}}</text>
+          <view class="rec-fig">
+            <view class="fig-row">
+              <text class="fig-num">{{rec.weight}}</text>
+              <text class="fig-unit">{{unitLabel}}</text>
+            </view>
+            <text class="rec-delta tabular {{rec.diffUp ? 'is-up' : ''}} {{rec.diffDown ? 'is-down' : ''}}">{{rec.diffFormatted}}</text>
+          </view>
         </view>
-      </view>
-
-      <!-- 上拉加载更多 -->
-      <view class="load-more">{{loadingMore ? '加载中...' : (hasMore ? '上拉加载更多' : '已显示全部记录')}}</view>
+      </block>
     </view>
 
-    <!-- 空状态 -->
-    <view wx:if="{{records.length === 0}}" class="empty-state">
+    <view wx:else class="empty-state">
       <text>还没有留下记录</text>
-      <text>记下今天，未来回看时会感谢自己</text>
+      <text>记下今天，回看时会感谢自己</text>
     </view>
   </block>
+
+  <view class="list-foot" wx:if="{{!loading && groups.length > 0}}">
+    {{loadingMore ? '正在加载…' : (hasMore ? '上拉加载更早的记录' : '已到最早的一条')}}<text wx:if="{{!hasMore}}" class="list-foot-hint">· 长按记录可删除</text>
+  </view>
 </view>

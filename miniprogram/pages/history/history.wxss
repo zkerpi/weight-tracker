@@ -1,41 +1,89 @@
-/* 趋势页 —— 与其它页同一套标题与数字：衬线大标题 + 衬线粗体数字 */
+/* 趋势页 —— 语气与其它页一致：留白多、框少、数字用衬线
+   这一页的核心问题是密度：一屏里塞了区间胶囊、三个大数字、曲线、补签横幅、
+   每条三行堆叠的明细行，且「删除」重复出现 N 次。这里按「一屏三个焦点」重排：
+   曲线（主）→ 一行注脚（辅）→ 按月分组的明细（读）。 */
 
-/* 区间统计：三个数字是这页的主角，40rpx 衬线粗体 */
-.period-stats { display:flex; padding:4rpx 0 22rpx; border-bottom:1rpx solid var(--line); }
-.period-stats>view { flex:1; }
-.period-value { display:block; font-size:40rpx; }
-.period-label { display:block; margin-top:8rpx; color:var(--muted); font-size:19rpx; }
+/* ---------- 趋势卡 ---------- */
+.trend-card { margin-top:24rpx; padding:22rpx 26rpx 20rpx; }
 
-.history-trend { padding:26rpx 24rpx 24rpx; }
-.range-tabs { display:flex; gap:5rpx; margin:22rpx 0 18rpx; padding:5rpx; border-radius:13rpx; background:var(--surface-soft); }
-.range-tab { flex:1; padding:11rpx 0; border-radius:9rpx; color:var(--muted); font-size:22rpx; text-align:center; }
-.range-tab.active { background:var(--surface); color:var(--text); font-weight:600; box-shadow:0 3rpx 10rpx #20372d0f; }
+/* 区间：不再是一排带底色的胶囊，改成一行文字 + 当前项的下划线。
+   五个胶囊本身就是一个很重的控件，压过了它要控制的曲线。 */
+.range-tabs { display:flex; margin:0 -6rpx 8rpx; }
+.range-tab {
+  padding:10rpx 14rpx; color:var(--muted); font-size:23rpx;
+  letter-spacing:.4rpx; line-height:1.2;
+}
+.range-tab.active { color:var(--text); font-weight:600; box-shadow:inset 0 -3rpx 0 var(--primary); }
 
-.history-list-heading { margin:30rpx 4rpx 14rpx; }
-.backfill-banner { margin-bottom:18rpx; padding:18rpx 20rpx; border-radius:16rpx; background:#eeeade; }
-.backfill-title { display:block; color:var(--text); font-size:23rpx; font-weight:600; }
-.backfill-list { display:flex; flex-direction:column; gap:7rpx; margin-top:10rpx; }
-.backfill-item { display:flex; justify-content:space-between; padding:10rpx 12rpx; border-radius:9rpx; background:#fff8; color:var(--muted); font-size:22rpx; }
-.backfill-action { color:var(--primary); }
+.trend-empty {
+  display:flex; height:240rpx; align-items:center; justify-content:center;
+  color:var(--faint); font-size:23rpx;
+}
 
-.history-list { overflow:hidden; border:1rpx solid var(--line); border-radius:20rpx; background:var(--surface); }
-.history-item { display:flex; align-items:center; justify-content:space-between; min-height:116rpx; padding:20rpx 24rpx; border-bottom:1rpx solid var(--line); }
-.history-item:last-child { border-bottom:none; }
-.history-left { display:flex; min-width:0; flex-direction:column; gap:5rpx; }
-.history-date { color:var(--text); font-size:25rpx; font-weight:600; }
-.history-note { max-width:310rpx; overflow:hidden; color:var(--muted); font-size:20rpx; text-overflow:ellipsis; white-space:nowrap; }
-.history-right { display:flex; align-items:flex-end; flex-direction:column; gap:4rpx; }
-.history-weight { font-size:34rpx; }
-.history-diff { color:var(--muted); font-size:20rpx; }
-.diff-up { color:#9c6349; }
-.diff-down { color:#4d7a5c; }
-.delete-action { padding:5rpx 0 0 18rpx; color:var(--faint); font-size:19rpx; }
-.load-more { padding:22rpx; color:var(--muted); font-size:20rpx; text-align:center; }
+/* 一行注脚：把原来三个 40rpx 的大数字压成一句话。
+   大数字在首页是主角，这里该让位给曲线。 */
+.trend-note {
+  display:flex; margin-top:14rpx; padding-top:16rpx; align-items:baseline;
+  border-top:1rpx solid var(--line);
+  color:var(--muted); font-size:21rpx;
+}
+.trend-note-dot { margin:0 12rpx; color:#c8c4b6; }
 
-/* 骨架屏 */
-.skeleton-list { padding-top:8rpx; }
-.skeleton-item { display:flex; align-items:center; justify-content:space-between; height:116rpx; padding:0 24rpx; border-bottom:1rpx solid var(--line); }
-.skeleton-line { height:18rpx; border-radius:9rpx; background:#eae6da; }
-.skeleton-date { width:180rpx; }
-.skeleton-weight { width:120rpx; }
-.skeleton-change { width:90rpx; }
+/* ---------- 小标题 ---------- */
+.list-head { display:flex; margin:34rpx 4rpx 16rpx; align-items:center; justify-content:space-between; }
+
+/* ---------- 补签：一行 ---------- */
+.gap-line { display:flex; margin-bottom:16rpx; align-items:center; }
+.gap-label { color:var(--muted); font-size:21rpx; letter-spacing:.6rpx; }
+.gap-chips { display:flex; flex:1; gap:10rpx; margin-left:14rpx; }
+.gap-chip {
+  padding:7rpx 16rpx; border-radius:999rpx; background:#eae5d5;
+  color:var(--text-soft); font-size:21rpx; font-variant-numeric:tabular-nums;
+}
+
+/* ---------- 明细：一张卡，按月分段，行内只有三样 ----------
+   旧版每行堆了「日期 / 备注 / 体重 / 涨跌 / 删除」五个文本节点，右侧三行叠着，
+   N 行下来就是一堵灰墙。现在一行一条：日 + 周几 | 备注 | 体重与涨跌。 */
+.rec-card { padding:4rpx 26rpx 10rpx; border:1rpx solid var(--line); border-radius:26rpx; background:var(--surface); }
+
+.rec-month {
+  padding:20rpx 0 10rpx; color:var(--muted); font-size:21rpx;
+  letter-spacing:2rpx; font-variant-numeric:tabular-nums;
+}
+.rec-month.is-after { margin-top:6rpx; border-top:1rpx solid var(--line); }
+
+/* 行间分隔线用 is-first 显式标出，不用 + / :not()——WXSS 对这些选择器的支持不稳 */
+.rec-row { display:flex; min-height:96rpx; padding:16rpx 0; align-items:center; border-top:1rpx solid #f0ece1; }
+.rec-row.is-first { border-top:none; }
+
+/* 日：日期是「被计数」的数字，留无衬线 + 等宽，和体重（衬线）分开层级 */
+.rec-day { display:flex; width:76rpx; flex-shrink:0; flex-direction:column; align-items:flex-start; }
+.rec-day-num { color:var(--text); font-size:32rpx; font-weight:600; line-height:1; }
+.rec-week { margin-top:5rpx; color:var(--faint); font-size:18rpx; line-height:1; }
+
+.rec-note {
+  flex:1; min-width:0; margin:0 16rpx; overflow:hidden;
+  color:var(--muted); font-size:21rpx; text-overflow:ellipsis; white-space:nowrap;
+}
+
+.rec-fig { display:flex; flex-shrink:0; align-items:baseline; }
+.rec-fig .fig-num { font-size:34rpx; }
+/* 涨跌固定宽度右对齐：一列数字才对得齐，否则每行宽窄不一。
+   宽度只留「▲ 12.3」的实际占位——再宽数字就和体重隔出一道空当。 */
+.rec-delta {
+  width:64rpx; margin-left:12rpx; color:var(--faint);
+  font-size:20rpx; text-align:right; line-height:1;
+}
+.rec-delta.is-up { color:#9c6349; }
+.rec-delta.is-down { color:#4d7a5c; }
+
+.list-foot { padding:26rpx 0 8rpx; color:var(--faint); font-size:20rpx; text-align:center; }
+.list-foot-hint { margin-left:6rpx; }
+
+/* ---------- 骨架屏 ---------- */
+.skeleton-row { display:flex; padding:26rpx 0; align-items:center; border-bottom:1rpx solid #f0ece1; }
+.skeleton-row:last-child { border-bottom:none; }
+.skeleton-line { height:16rpx; border-radius:8rpx; background:#eeeade; }
+.skeleton-day { width:56rpx; }
+.skeleton-note { flex:1; margin:0 20rpx; }
+.skeleton-weight { width:110rpx; }
