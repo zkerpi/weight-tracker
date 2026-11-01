@@ -56,11 +56,16 @@ function main() {
   const list = names.length ? names : ['index', 'rank', 'goal', 'unit', 'history', 'profile']
 
   const columns = list.map(spec => {
-    // 支持 "index:night" 这种变体，用来比对昼夜两套圆环
+    // 支持 "index:night" 这种变体，用来比对昼夜两套圆环；
+    // 变体还可以用 preview/mock/<name>.<variant>.js 覆盖任意字段（如 index:midweek）
     const [name, variant] = spec.split(':')
     let data = {}
     const mockFile = path.join(ROOT, 'preview', 'mock', name + '.js')
     if (fs.existsSync(mockFile)) data = require(mockFile)
+    if (variant) {
+      const vf = path.join(ROOT, 'preview', 'mock', name + '.' + variant + '.js')
+      if (fs.existsSync(vf)) data = Object.assign({}, data, require(vf))
+    }
     if (variant === 'night') data = Object.assign({}, data, { isDay: false })
     const tabIndex = { index: 0, group: 1, profile: 2 }[name]
     return phone(name, data, mockFile, tabIndex, variant)

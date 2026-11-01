@@ -137,7 +137,15 @@ Page({
         trendPointCount: res.data.length
       })
     } catch (err) {
-      if (request === this._summaryRequest) this.setData({ chartError: '摘要加载失败', chartData: [], trendPointCount: 0, week: dates.slice(-7).map(date => ({ date, label: date.slice(8), today: date === util.getToday(), done: false })), insightTitle: '趋势暂时不可用', insightText: '' })
+      if (request === this._summaryRequest) {
+        const wd0 = ['日', '一', '二', '三', '四', '五', '六']
+        const today0 = util.getToday()
+        this.setData({
+          chartError: '摘要加载失败', chartData: [], trendPointCount: 0,
+          week: util.getWeekDates().map(date => ({ date, label: date.slice(8), today: date === today0, future: date > today0, done: false, weekday: wd0[new Date(date).getDay()] })),
+          insightTitle: '趋势暂时不可用', insightText: ''
+        })
+      }
     } finally { if (request === this._summaryRequest) this.setData({ chartLoading: false }) }
   },
   // 「较上次」：最近两条记录之差（设计稿口径），不是相较起点
@@ -156,6 +164,11 @@ Page({
   },
   goRecord() { wx.navigateTo({ url: '/pages/record/record' }) },
   goHistory() { wx.navigateTo({ url: '/pages/history/history' }) },
-  goDay(e) { wx.navigateTo({ url: `/pages/record/record?date=${e.currentTarget.dataset.date}` }) },
+  goDay(e) {
+    const date = e.currentTarget.dataset.date
+    // 本周的格子里有还没到的日子，点进去等于给未来记体重
+    if (!date || date > util.getToday()) return
+    wx.navigateTo({ url: `/pages/record/record?date=${date}` })
+  },
   onShareAppMessage() { return { title: '把自己照顾好，从一次记录开始。', path: '/pages/index/index' } }
 })

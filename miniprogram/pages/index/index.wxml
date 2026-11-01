@@ -41,12 +41,12 @@
     <view class="panel">
       <view class="panel-head">
         <text class="panel-title">本周打卡</text>
-        <text class="panel-stat tabular">{{weekCount || 0}} / 7 天</text>
+        <text class="panel-stat tabular">{{weekCount || 0}} 天</text>
       </view>
       <view class="week-row">
         <view wx:for="{{week}}" wx:key="date" class="week-cell" data-date="{{item.date}}" bindtap="goDay">
-          <text class="week-label {{item.today ? 'is-today' : ''}}">{{item.today ? '今天' : '周' + item.weekday}}</text>
-          <view class="week-dot {{item.done ? 'done' : ''}}"><text wx:if="{{item.done}}" class="week-tick">✓</text></view>
+          <text class="week-label {{item.today ? 'is-today' : ''}} {{item.future ? 'is-future' : ''}}">{{item.today ? '今天' : '周' + item.weekday}}</text>
+          <view class="week-dot {{item.done ? 'done' : ''}} {{item.future ? 'future' : ''}}"><text wx:if="{{item.done}}" class="week-tick">✓</text></view>
         </view>
       </view>
     </view>

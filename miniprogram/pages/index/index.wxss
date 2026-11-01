@@ -131,10 +131,14 @@
 .week-cell { display:flex; flex:1; flex-direction:column; align-items:center; }
 .week-label { color:var(--muted); font-size:19rpx; line-height:1.2; }
 .week-label.is-today { color:var(--primary); font-weight:650; }
+/* 还没到的日子：淡到只剩位置。不下虚线框、不做灰色实心点——
+   那是「待完成」的形状，周中打开会像欠着四天的账。 */
+.week-label.is-future { opacity:.34; }
 .week-dot {
   display:flex; width:40rpx; height:40rpx; margin-top:10rpx; align-items:center; justify-content:center;
   border-radius:50%; background:#e9e5d8;
 }
+.week-dot.future { background:#f4f1e8; }
 .week-dot.done { background:var(--primary); }
 .week-tick { color:#fff; font-size:21rpx; line-height:1; }
 

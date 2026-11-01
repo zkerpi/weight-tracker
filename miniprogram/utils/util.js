@@ -28,6 +28,21 @@ function getDateRange(days) {
   return dates
 }
 
+// 本周的 7 个日期，周一开头、周日结尾。
+// 打卡格必须用自然周：滚动窗口「最近 7 天」的起点是任意周几（周一打开时第一格是上周二），
+// 7 个格子读不出「一周」的形状，标题却写着「本周」，两边对不上。
+function getWeekDates() {
+  const now = new Date()
+  const day = now.getDay() // 0 = 周日
+  const offset = day === 0 ? 6 : day - 1 // 距本周一几天
+  const dates = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset + i)
+    dates.push(formatDate(d))
+  }
+  return dates
+}
+
 function showToast(title, icon = 'none') {
   wx.showToast({ title, icon, duration: 2000 })
 }
@@ -92,6 +107,7 @@ module.exports = {
   formatDisplayDate,
   daysAgo,
   getDateRange,
+  getWeekDates,
   showToast,
   showSuccess,
   showError,
