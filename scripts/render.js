@@ -147,12 +147,22 @@ function renderNode(node, scope, insideFor) {
 }
 
 /* ---------- 4. 组装 HTML ---------- */
+// wxml 的 view/text 渲染成 div/span，但 CSS 里的元素选择器还写着 view/text，
+// 子选择器（.period-stats>view）就永远匹配不上——三列统计会被压成一坨。
+// 这里把样式里的元素名一并换掉，保证预览和真机同构。
+function mapTags(css) {
+  const SEL = /(^|[\s>+~,(])view(?=[\s>+~,.:#[]|\{|$)/g
+  const SEL_T = /(^|[\s>+~,(])text(?=[\s>+~,.:#[]|\{|$)/g
+  return css.replace(SEL, '$1div').replace(SEL_T, '$1span')
+}
+
 function wxss(file) {
   let css = fs.readFileSync(file, 'utf8')
   css = css.replace(/^\uFEFF/, '')
   // page 选择器必须换成真实元素，否则 app.wxss 里挂在 page 上的
   // CSS 变量全部失效：按钮透明、绿点变灰，预览会骗人。
   css = css.replace(/^\s*page\s*\{/gm, 'body {')
+  css = mapTags(css)
   return rpx(css)
 }
 
@@ -248,5 +258,5 @@ ${body}
 }
 
 // 作为模块被引用时（render-all.js）只导出工具函数，不执行 CLI
-module.exports = { ROOT, MP, rpx, parse, interp, renderChildren, wxss }
+module.exports = { ROOT, MP, rpx, mapTags, parse, interp, renderChildren, wxss }
 if (require.main === module) main()

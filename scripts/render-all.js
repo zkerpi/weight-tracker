@@ -7,7 +7,7 @@
  */
 const fs = require('fs')
 const path = require('path')
-const { ROOT, MP, rpx, parse, renderChildren } = require('./render')
+const { ROOT, MP, rpx, mapTags, parse, renderChildren } = require('./render')
 
 // rpx -> px，并把 page 选择器换成 .screen（每列一个独立屏幕）
 // 注意必须按行首匹配：app.wxss 的 page 规则紧跟注释块，用「前一个字符是 }」匹配不到，
@@ -15,6 +15,7 @@ const { ROOT, MP, rpx, parse, renderChildren } = require('./render')
 function wxssFor(file) {
   let css = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')
   css = css.replace(/^\s*page\s*\{/gm, '.screen {')
+  css = mapTags(css)
   return rpx(css)
 }
 

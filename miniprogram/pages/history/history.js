@@ -2,6 +2,10 @@ const util = require('../../utils/util')
 
 const PAGE_SIZE = 20
 
+// 区间与 chartRanges 一一对应。首页「体重趋势」的「近7天」入口指向这里的第一档，
+// 两处必须同步——否则从首页点进去看到的图和标签承诺的不是同一段时间。
+const RANGE_DAYS = [7, 14, 30, 90, 365]
+
 Page({
   data: {
     records: [],
@@ -10,7 +14,7 @@ Page({
     hasMore: true,
     loadingMore: false,
     chartData: [],
-    chartRanges: ['14 天', '30 天', '90 天', '1 年'],
+    chartRanges: ['7天', '14天', '30天', '90天', '1年'],
     chartRangeIndex: 0,
     chartLoading: true,
     chartError: '',
@@ -33,7 +37,7 @@ Page({
     try {
       const user = await getApp().ensureUser(false)
       if (!user) throw new Error('无法获取用户')
-      const dates = util.getDateRange([14, 30, 90, 365][this.data.chartRangeIndex])
+      const dates = util.getDateRange(RANGE_DAYS[this.data.chartRangeIndex])
       const db = wx.cloud.database()
       const records = []
       let cursor = ''

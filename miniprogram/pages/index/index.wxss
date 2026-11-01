@@ -109,7 +109,22 @@
 .panel-muted { background:#f4f1e6; }
 .panel-head { display:flex; align-items:center; justify-content:space-between; }
 .panel-title { color:var(--text); font-size:26rpx; font-weight:650; }
-.panel-side { color:var(--muted); font-size:21rpx; }
+/* 面板右上角的静态计数（本周打卡的 3 / 7 天）：纯文字，不可点 */
+.panel-stat { color:var(--muted); font-size:21rpx; }
+/* 面板右上角的动作（体重趋势的「近7天」）：原来和上面的计数共用一套灰小字，
+   于是链接长得像图注、点按高度不足半个字；改为有底的胶囊 + 自绘箭头。 */
+.panel-action {
+  display:flex; height:44rpx; padding:0 18rpx 0 16rpx;
+  align-items:center; border-radius:999rpx; background:#eae6d6;
+}
+.panel-action-hover { background:#e0dbc7; }
+.panel-action-text { color:var(--primary); font-size:21rpx; font-weight:600; letter-spacing:.6rpx; line-height:1; }
+/* 箭头用两条边框旋转 45° 画，不吃字体差异：› 在中文字体里位置随字库漂移 */
+.panel-action-arrow {
+  width:8rpx; height:8rpx; margin-left:5rpx;
+  border-top:2rpx solid var(--primary); border-right:2rpx solid var(--primary);
+  transform:translateY(-1rpx) rotate(45deg);
+}
 
 /* 本周打卡 */
 .week-row { display:flex; margin-top:14rpx; }

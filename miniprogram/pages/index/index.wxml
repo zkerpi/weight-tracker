@@ -41,7 +41,7 @@
     <view class="panel">
       <view class="panel-head">
         <text class="panel-title">本周打卡</text>
-        <text class="panel-side tabular">{{weekCount || 0}} / 7 天</text>
+        <text class="panel-stat tabular">{{weekCount || 0}} / 7 天</text>
       </view>
       <view class="week-row">
         <view wx:for="{{week}}" wx:key="date" class="week-cell" data-date="{{item.date}}" bindtap="goDay">
@@ -54,7 +54,10 @@
     <view class="panel panel-muted">
       <view class="panel-head">
         <text class="panel-title">体重趋势</text>
-        <text class="panel-side" bindtap="goHistory">近 7 天 ›</text>
+        <view class="panel-action" bindtap="goHistory" hover-class="panel-action-hover" hover-stay-time="120">
+          <text class="panel-action-text">近7天</text>
+          <view class="panel-action-arrow"></view>
+        </view>
       </view>
       <view wx:if="{{chartLoading}}" class="chart-placeholder">正在加载趋势…</view>
       <view wx:elif="{{chartError}}" class="chart-placeholder" bindtap="loadSummary">加载失败，点击重试</view>
