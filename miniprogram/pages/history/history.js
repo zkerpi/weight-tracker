@@ -11,7 +11,6 @@ Page({
     records: [],
     groups: [],
     loading: true,
-    gaps: [],
     hasMore: true,
     loadingMore: false,
     chartData: [],
@@ -117,7 +116,6 @@ Page({
 
       const patch = { records, groups: this._groupRecords(records), hasMore, loadingMore: false, loading: false, unitLabel }
       patch.error = ''
-      if (reset) patch.gaps = this._computeGaps(records)
       this.setData(patch)
     } catch (err) {
       console.error(err)
@@ -154,40 +152,37 @@ Page({
     })
   },
 
-  // 按月分段：列表里原来每条都顶着完整日期（2026-11-01），年月重复 N 遍；
-  // 月份提到段首，行里只留「日」，一屏能多读两条，也不再是一片数字。
+  // 按月分段，并默认只展开最近一个月：
+  // 记录一多，平铺的列表根本没有尽头，滑到哪儿都还是数字。
+  // 折叠成月份的目录后，一屏就能看到「一共记了几个月」，想翻哪个月再展开。
   _groupRecords(records) {
+    if (!this._openKeys) this._openKeys = new Set()
     const groups = []
     let cur = null
     records.forEach(r => {
       if (!cur || cur.key !== r.monthKey) {
-        cur = { key: r.monthKey, label: Number(r.monthKey.slice(5)) + ' 月', items: [] }
+        cur = { key: r.monthKey, label: Number(r.monthKey.slice(5)) + ' 月', items: [], count: 0, open: false }
         groups.push(cur)
       }
       cur.items.push(Object.assign({ first: cur.items.length === 0 }, r))
+      cur.count = cur.items.length
     })
+    // 首次进入时默认展开最新一个月；之后用户点开/收起过哪些就记住哪些。
+    // 用 _didInitOpen 而不是「集合为空」判断——用户把月份全收起来后，
+    // 上拉加载更早的记录不该把最新一个月又弹开。
+    if (groups.length && !this._didInitOpen) {
+      this._didInitOpen = true
+      this._openKeys.add(groups[0].key)
+    }
+    groups.forEach(g => { g.open = this._openKeys.has(g.key) })
     return groups
   },
 
-  // 最近7天补签缺口（最多3个），仅首屏计算
-  _computeGaps(records) {
-    const gaps = []
-    if (records.length === 0) return gaps
-    const today = util.getToday()
-    const oldestDate = records[records.length - 1].date
-    for (let i = 1; i <= 7; i++) {
-      const d = new Date()
-      d.setDate(d.getDate() - i)
-      const dateStr = util.formatDate(d)
-      if (dateStr < oldestDate) break // 不要超出最早记录
-      if (dateStr >= today) continue // 今天不补
-      const exists = records.some(r => r.date === dateStr)
-      if (!exists) {
-        gaps.push({ date: dateStr, label: dateStr.slice(5) })
-        if (gaps.length >= 3) break
-      }
-    }
-    return gaps
+  toggleMonth(e) {
+    const key = e.currentTarget.dataset.key
+    const groups = this.data.groups.map(g => (g.key === key ? Object.assign({}, g, { open: !g.open }) : g))
+    this._openKeys = new Set(groups.filter(g => g.open).map(g => g.key))
+    this.setData({ groups })
   },
 
   retry() { this.loadRecords(true) },

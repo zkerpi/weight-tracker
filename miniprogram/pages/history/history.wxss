@@ -32,25 +32,31 @@
 /* ---------- 小标题 ---------- */
 .list-head { display:flex; margin:34rpx 4rpx 16rpx; align-items:center; justify-content:space-between; }
 
-/* ---------- 补签：一行 ---------- */
-.gap-line { display:flex; margin-bottom:16rpx; align-items:center; }
-.gap-label { color:var(--muted); font-size:21rpx; letter-spacing:.6rpx; }
-.gap-chips { display:flex; flex:1; gap:10rpx; margin-left:14rpx; }
-.gap-chip {
-  padding:7rpx 16rpx; border-radius:999rpx; background:#eae5d5;
-  color:var(--text-soft); font-size:21rpx; font-variant-numeric:tabular-nums;
-}
+/* ---------- 补签：不再单列 ----------
+   原来把漏掉的日期一条条摆出来（可补记 + 三个日期块），本质是在提醒「你欠了几天」，
+   看一次就被压一次。位置让给「补记 / 新增 ›」，人手点进去自己选日期，
+   漏没漏看本周打卡的圆点就够了。 */
 
-/* ---------- 明细：一张卡，按月分段，行内只有三样 ----------
-   旧版每行堆了「日期 / 备注 / 体重 / 涨跌 / 删除」五个文本节点，右侧三行叠着，
-   N 行下来就是一堵灰墙。现在一行一条：日 + 周几 | 备注 | 体重与涨跌。 */
+/* ---------- 明细：一张卡，按月折叠 ----------
+   旧版平铺所有记录，滑到哪儿都还是数字，没有尽头。
+   现在月份是目录行：收起只报「几月 · 几条」，点开才铺记录。 */
 .rec-card { padding:4rpx 26rpx 10rpx; border:1rpx solid var(--line); border-radius:26rpx; background:var(--surface); }
 
 .rec-month {
-  padding:20rpx 0 10rpx; color:var(--muted); font-size:21rpx;
-  letter-spacing:2rpx; font-variant-numeric:tabular-nums;
+  display:flex; padding:22rpx 0; align-items:center;
+  color:var(--muted); font-size:21rpx; letter-spacing:1.4rpx;
+  font-variant-numeric:tabular-nums;
 }
-.rec-month.is-after { margin-top:6rpx; border-top:1rpx solid var(--line); }
+.rec-month.is-after { border-top:1rpx solid var(--line); }
+.rec-month-label { flex:1; }
+.rec-month-count { margin-right:12rpx; color:var(--faint); letter-spacing:.4rpx; }
+.rec-caret {
+  width:9rpx; height:9rpx; margin-right:2rpx;
+  border-right:1.5rpx solid var(--muted); border-bottom:1.5rpx solid var(--muted);
+  transform:rotate(-45deg); transition:transform .18s ease;
+}
+/* 收起 = ▶（还有内容没展开）；展开 = ▼ */
+.rec-caret.is-open { transform:rotate(45deg); }
 
 /* 行间分隔线用 is-first 显式标出，不用 + / :not()——WXSS 对这些选择器的支持不稳 */
 .rec-row { display:flex; min-height:96rpx; padding:16rpx 0; align-items:center; border-top:1rpx solid #f0ece1; }

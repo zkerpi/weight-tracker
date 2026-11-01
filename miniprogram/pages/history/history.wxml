@@ -36,16 +36,6 @@
     <text class="text-link" bindtap="goRecord">补记 / 新增 ›</text>
   </view>
 
-  <!-- 补签：原来是一块带标题和列表的横幅，占掉整屏的 1/6；
-       改成一行，日期做成可点的小块 -->
-  <view wx:if="{{gaps.length > 0}}" class="gap-line">
-    <text class="gap-label">可补记</text>
-    <view class="gap-chips">
-      <text class="gap-chip" wx:for="{{gaps}}" wx:key="date"
-            bindtap="goBackfill" data-date="{{item.date}}">{{item.label}}</text>
-    </view>
-  </view>
-
   <!-- 骨架屏 -->
   <view wx:if="{{loading}}" class="rec-card">
     <view class="skeleton-row" wx:for="{{5}}" wx:key="*this">
@@ -58,23 +48,31 @@
   <block wx:else>
     <view wx:if="{{groups.length > 0}}" class="rec-card">
       <block wx:for="{{groups}}" wx:key="key" wx:for-item="group">
-        <view class="rec-month {{index > 0 ? 'is-after' : ''}}">{{group.label}}</view>
-        <view class="rec-row {{rec.first ? 'is-first' : ''}}" wx:for="{{group.items}}" wx:key="_id" wx:for-item="rec"
-              data-id="{{rec._id}}" data-date="{{rec.date}}"
-              bindtap="goBackfill" bindlongpress="onDeleteRecord">
-          <view class="rec-day">
-            <text class="rec-day-num tabular">{{rec.day}}</text>
-            <text class="rec-week">{{rec.week}}</text>
-          </view>
-          <text class="rec-note">{{rec.note}}</text>
-          <view class="rec-fig">
-            <view class="fig-row">
-              <text class="fig-num">{{rec.weight}}</text>
-              <text class="fig-unit">{{unitLabel}}</text>
-            </view>
-            <text class="rec-delta tabular {{rec.diffUp ? 'is-up' : ''}} {{rec.diffDown ? 'is-down' : ''}}">{{rec.diffFormatted}}</text>
-          </view>
+        <!-- 月份是目录：收起时只报「几月 · 几条」，点开才铺记录。
+             平铺的列表没有尽头，收起后一屏能看清一共记了几个月。 -->
+        <view class="rec-month {{index > 0 ? 'is-after' : ''}}" bindtap="toggleMonth" data-key="{{group.key}}">
+          <text class="rec-month-label">{{group.label}}</text>
+          <text class="rec-month-count">{{group.count}} 条</text>
+          <view class="rec-caret {{group.open ? 'is-open' : ''}}"></view>
         </view>
+        <block wx:if="{{group.open}}">
+          <view class="rec-row {{rec.first ? 'is-first' : ''}}" wx:for="{{group.items}}" wx:key="_id" wx:for-item="rec"
+                data-id="{{rec._id}}" data-date="{{rec.date}}"
+                bindtap="goBackfill" bindlongpress="onDeleteRecord">
+            <view class="rec-day">
+              <text class="rec-day-num tabular">{{rec.day}}</text>
+              <text class="rec-week">{{rec.week}}</text>
+            </view>
+            <text class="rec-note">{{rec.note}}</text>
+            <view class="rec-fig">
+              <view class="fig-row">
+                <text class="fig-num">{{rec.weight}}</text>
+                <text class="fig-unit">{{unitLabel}}</text>
+              </view>
+              <text class="rec-delta tabular {{rec.diffUp ? 'is-up' : ''}} {{rec.diffDown ? 'is-down' : ''}}">{{rec.diffFormatted}}</text>
+            </view>
+          </view>
+        </block>
       </block>
     </view>
 
